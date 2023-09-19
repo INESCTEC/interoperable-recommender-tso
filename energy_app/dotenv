@@ -1,0 +1,16 @@
+# Entsoe configs:
+ENTSOE_API_KEY=insert_api_key_here
+ENERGY_APP_API_KEY=insert_api_key_here
+POST_TO_ENERGY_APP=1
+
+# Database configs:
+POSTGRES_HOST=db_host
+POSTGRES_NAME=db_name
+POSTGRES_USER=db_user
+POSTGRES_PASSWORD=db_password
+POSTGRES_PORT=db_port
+
+# EnergyAPP backend configs:
+ENERGYAPP_HOST=host_here
+ENERGYAPP_PORT=port_here
+ENERGYAPP_N_RETRIES=3

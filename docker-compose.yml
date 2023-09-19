@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  energy_app:
+    build:
+      context: .
+      dockerfile: ./energy_app/Dockerfile
+    container_name: energy_app
+    environment:
+      - WAIT_HOSTS=postgresql:5432
+    env_file:
+      - energy_app/.env
+    volumes:
+      - ./energy_app/files:/energy_app/files
+    depends_on:
+      - postgresql
+    networks:
+      - energy_app
+
+  postgresql:
+    build:
+      context: .
+      dockerfile: ./database/Dockerfile
+    container_name: postgresql
+    restart: always
+    env_file:
+      - database/.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+    networks:
+      - energy_app
+
+volumes:
+  postgresql-data:
+
+networks:
+    energy_app:
+        driver: bridge

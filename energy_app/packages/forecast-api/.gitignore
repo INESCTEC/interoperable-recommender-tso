@@ -1,0 +1,6 @@
+.idea/
+.vscode/
+.pytest_cache
+.coverage
+
+docs/_build
