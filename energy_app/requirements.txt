@@ -1,0 +1,15 @@
+# entsoe-py==0.5.9
+loguru==0.5.3
+python-dotenv==0.21.0
+scipy==1.9.3
+pandas~=2.0.3
+psycopg2==2.9.6
+SQLAlchemy==1.4.49
+alembic==1.11.1
+sqlacodegen==2.3.0
+statsmodels==0.14.0
+scikit-learn==1.2.2
+matplotlib==3.7.2
+dill==0.3.7
+
+git+https://energy-app:glpat-ERm-_JDsWP-fYK8stBMK@gitlab.inesctec.pt/cpes/general-tools/forecast/forecast-api.git

@@ -1,92 +1,231 @@
-# Interoperable Recommender TSO
+<div align="center">
+  <img src="/docs/images/logo.png"  align="middle">
+</div>
 
+-----------------------------------------------------
 
+[![version](https://img.shields.io/badge/version-0.0.1-blue.svg)]()
+[![status](https://img.shields.io/badge/status-production-brightgreen.svg)]()
+[![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Image Size](https://img.shields.io/badge/image%20size-1.71GB-blue.svg)]()
 
-## Getting started
+Preliminary documentation available at the project `docs/` directory.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Initial setup:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+> **_NOTE:_**  The commands below assume that you are running them from the root directory of the project (`energy_app/`)
 
-## Add your files
+### Configure environment variables:
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+The `dotenv` file provides a template for all the environment variables needed by this project. 
+To configure the environment variables, copy the `dotenv` file to `.env` and fill in the values for each variable.
 
+```shell
+   $ cp dotenv .env
 ```
-cd existing_repo
-git remote add origin https://gitlab.inesctec.pt/interconnect-public/interoperable-recommender-tso.git
-git branch -M main
-git push -uf origin main
+**_NOTE:_** In windows, just copy-paste the `dotenv` file and rename it to `.env`.
+
+
+### With Docker:
+
+To launch the docker containers stack:
+
+```shell
+   $ docker compose up -d
 ```
 
-## Integrate with your tools
+**_NOTE:_**  This will launch the database container and the 'energy_app' container. Note that both database schema will be initialized and the database migrations will be applied.
+**_NOTE:_**  The entrypoint of 'energy_app' container also runs the 'load_db_fixtures.py' script which fills the 'country' and 'country_neighbours' tables with data from the 'database/fixtures/countries.json' file.
 
-- [ ] [Set up project integrations](https://gitlab.inesctec.pt/interconnect-public/interoperable-recommender-tso/-/settings/integrations)
 
-## Collaborate with your team
+Assure that the database fixtures are imported by running the following command (in some platforms there might be issues with the entrypoint):
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```shell
+   $ docker compose run --rm energy_app python load_db_fixtures.py
+```
 
-## Test and Deploy
+### With Local Python Interpreter:
 
-Use the built-in continuous integration in GitLab.
+If you prefer using your local python interpreter (instead of docker), you'll need to manually perform the installation steps. Meaning:
+1. Install the python dependencies
+   ```shell
+        $ pip install -r requirements.txt
+     ```
+2. Start the database container
+    ```shell
+        $ docker compose up -d timescaledb
+    ```
+3. Apply the database migrations
+    ```shell
+        $ alembic upgrade head
+    ```
+4. Run the 'load_db_fixtures.py' script to init the database with its fixtures
+    ```shell
+        $ python load_db_fixtures.py
+    ```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### How to run:
 
-***
+> **_NOTE 1:_**  The following instructions assume that the database is already initialized
+and the database migrations are already applied. If not, please refer to the [Initial setup](#initial-setup) section.
 
-# Editing this README
+> **_NOTE 2:_**  The commands below assume that you are running them from the root directory of the project (`energy_app/`)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+#### Data acquisition tasks:
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+To launch the data acquisition pipeline, execute the `main_data_acquisition.py` script from the `energy_app` container:
 
-## Name
-Choose a self-explaining name for your project.
+***With Docker:***
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```shell
+   $ docker compose run --rm energy_app python main_data_acquisition.py
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+***With Local Python interpreter:***
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```shell
+   $ python main_data_acquisition.py
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+This will trigger the entire process of data ETL. Namely:
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+  1. Data retrieval from ENTSO-E Transparency Platform (via it's [REST API](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html))
+  2. Data manipulation and transformation (e.g., aggregate data by control area for NTC forecasts)
+  3. Data load to the central database (PostgreSQL / TimescaleDB)
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+> **_IMPORTANT:_** We recommend you run the data acquisition pipeline with a 
+> lookback period to minimize the amount of missing historical data. 
+> For example, to run the data acquisition pipeline for the last 30 days, run the following command:
+> ```shell
+>   $ docker compose run --rm energy_app python main_data_acquisition.py --lookback_days=7
+> ```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+#### Risk assessment and recommendation creation task:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+To launch the recommender main pipeline, execute the `main.py` script from the `energy_app` container:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+***With Docker:***
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```shell
+   $ docker compose run --rm energy_app python main.py
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+***With Local Python interpreter:***
 
-## License
-For open source projects, say how it is licensed.
+```shell
+   $ python main.py
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+This will run the following operations pipeline:
+  1. Create country load & generation quantile forecasts and load system dataset from the service database (i.e., raw ENTSO-E data)
+  2. Calculate Risk-Reserve Curve and risk evaluation per country
+  3. Create Risk Coordination Matrix and set the final risk level for each country
+  4. Prepare the final JSON payload with the recommendations for each country (as required by the EnergyAPP backend)
+  5. Perform HTTP request to POST the recommendations to the EnergyAPP backend
+
+An overview of the full pipeline is available in the image below (press to zoom).
+
+<img src="docs/images/energy_app_pipeline.png" alt="drawing" width="800"/>
+
+
+### Database maintenance / management:
+
+#### Table creation / migrations:
+
+We use `alembic` library for database migrations. To create a new table, follow the steps below:
+
+1. Add ORM SQLalchemy model in `energy_app/database/alembic/models.py` script
+2. Create new revision with alembic:
+```shell
+   $ alembic revision --autogenerate -m "Added ntc forecasts table"
+```
+3. Apply the new revision with alembic:
+```shell
+   $ alembic upgrade head
+```
+
+
+#### Database Backup:
+
+##### To .bak file:
+
+This software includes a database management tool. Which backups the database to a local file. To run the backup script, execute the following command:
+
+```shell
+   $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py backup database --file_name=<file_path_here>
+```
+
+##### To CSVs:
+
+Alternatively, the database can be backed up to CSV. To run the backup script, execute the following command:
+
+```shell
+   $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py backup table
+```
+
+> **_NOTE:_** There are multiple backup options. You can check the available options via:
+> ```shell
+>  $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py backup --help
+> ```
+
+#### Database VACUUM:
+
+Database optimization ops are also available (and frequently executed). To run a DB vacuum:
+
+```shell
+   $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py vacuum database
+```
+
+### Database full reset:
+
+First, stop database container then remove the database volume and
+start the database container again.
+
+```shell
+   $ docker compose down postgresql  # Stops the database container
+   $ docker volume rm energy-app-recommender_postgresql-data  # Removes the database volume
+   $ docker compose up -d postgresql  # Starts the database container
+```
+
+Then, run the following command to apply the database migrations (with alembic):
+
+***With Docker:***
+
+```shell
+   $ docker compose run --rm energy_app sh entrypoint.sh
+```
+
+***With Local Python interpreter:***
+```shell
+   $ alembic upgrade head
+   $ python load_db_fixtures.py
+```
+
+### CLI arguments:
+
+The `energy_app` process pipeline can be triggered with the following CLI arguments:
+
+```shell
+   $ python main.py --help
+```
+
+#### Examples:
+
+To execute for a specific launch time:
+    
+```shell
+  $ python main.py --launch_time "2023-06-01T00:00:00Z"
+```
+
+To execute for a specific launch time and set a specific lookback period 
+(in days) to retrieve historical data from the database 
+(i.e., previously acquired via the ENTSO-E data acquisition module)
+
+```shell
+  # Retrieve ENTSOE data for the 30 days prior to 2023-06-01T00:00:00Z
+  $ python main.py --launch_time "2023-06-01T00:00:00Z" --lookback_days 30
+```
+
+
+## [Devs] How to add new table?
+

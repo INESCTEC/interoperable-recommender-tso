@@ -1,0 +1,423 @@
+{
+ "BE": {
+  "name": "Belgium",
+  "neighbours": [
+   "NL",
+   "FR",
+   "GB",
+   "DE"
+  ],
+  "active": true,
+  "timezone": "Europe/Brussels",
+  "biggest_gen_capacity": 1039.0,
+  "biggest_gen_name": "DOEL 4",
+  "generator_zones": [
+   "DK_1"
+  ]
+ },
+ "NL": {
+  "name": "Netherlands",
+  "neighbours": [
+   "BE",
+   "GB",
+   "DE",
+   "DK"
+  ],
+  "active": true,
+  "timezone": "Europe/Amsterdam",
+  "biggest_gen_capacity": 1580.0,
+  "biggest_gen_name": "Eemshaven "
+ },
+ "FR": {
+  "name": "France",
+  "neighbours": [
+   "BE",
+   "CH",
+   "ES",
+   "IT",
+   "GB",
+   "DE"
+  ],
+  "active": true,
+  "timezone": "Europe/Paris",
+  "biggest_gen_capacity": 1714.0,
+  "biggest_gen_name": "GRAND MAISON"
+ },
+ "CH": {
+  "name": "Switzerland",
+  "neighbours": [
+   "AT",
+   "FR",
+   "IT",
+   "DE"
+  ],
+  "active": true,
+  "timezone": "Europe/Zurich",
+  "biggest_gen_capacity": 1926.0,
+  "biggest_gen_name": "Gde-Dixence (GD)"
+ },
+ "AT": {
+  "name": "Austria",
+  "neighbours": [
+   "CH",
+   "CZ",
+   "HU",
+   "SI",
+   "IT",
+   "DE"
+  ],
+  "active": true,
+  "timezone": "Europe/Vienna",
+  "biggest_gen_capacity": 1349.2,
+  "biggest_gen_name": "KW Simmering"
+ },
+ "CZ": {
+  "name": "Czech Republic",
+  "neighbours": [
+   "AT",
+   "PL",
+   "SK",
+   "DE"
+  ],
+  "active": true,
+  "timezone": "Europe/Prague",
+  "biggest_gen_capacity": 2056.0,
+  "biggest_gen_name": "ETEM_______"
+ },
+ "UK": {
+  "name": "United Kingdom",
+  "neighbours": [
+   "BE",
+   "FR",
+   "NL"
+  ],
+  "active": true,
+  "timezone": "Europe/London",
+  "biggest_gen_capacity": 3885,
+  "biggest_gen_name": "DRAXX"
+ },
+ "HU": {
+  "name": "Hungary",
+  "neighbours": [
+   "AT",
+   "HR",
+   "RO",
+   "RS",
+   "SK"
+  ],
+  "active": true,
+  "timezone": "Europe/Budapest",
+  "biggest_gen_capacity": 1915.6,
+  "biggest_gen_name": "Paksi Atomer\u0151m\u0171"
+ },
+ "ES": {
+  "name": "Spain",
+  "neighbours": [
+   "FR",
+   "PT"
+  ],
+  "active": true,
+  "timezone": "Europe/Madrid",
+  "biggest_gen_capacity": 5633.4,
+  "biggest_gen_name": "EHIBGES"
+ },
+ "SI": {
+  "name": "Slovenia",
+  "neighbours": [
+   "AT",
+   "IT",
+   "HR"
+  ],
+  "active": true,
+  "timezone": "Europe/Ljubljana",
+  "biggest_gen_capacity": 844.0,
+  "biggest_gen_name": "TE \u0160o\u0161tanj"
+ },
+ "RS": {
+  "name": "Serbia",
+  "neighbours": [
+   "AL",
+   "BA",
+   "BG",
+   "HR",
+   "HU",
+   "ME",
+   "MK",
+   "RO"
+  ],
+  "active": true,
+  "timezone": "Europe/Belgrade",
+  "biggest_gen_capacity": 1765.5,
+  "biggest_gen_name": "TENT A"
+ },
+ "PL": {
+  "name": "Poland",
+  "neighbours": [
+   "CZ",
+   "LT",
+   "SK",
+   "SE",
+   "DE"
+  ],
+  "active": true,
+  "timezone": "Europe/Warsaw",
+  "biggest_gen_capacity": 5102.0,
+  "biggest_gen_name": "Be\u0142chat\u00f3w"
+ },
+ "ME": {
+  "name": "Montenegro",
+  "neighbours": [
+   "AL",
+   "IT",
+   "BA",
+   "RS"
+  ],
+  "active": true,
+  "timezone": "Europe/Podgorica",
+  "biggest_gen_capacity": 342.0,
+  "biggest_gen_name": "HE_Piva"
+ },
+ "RO": {
+  "name": "Romania",
+  "neighbours": [
+   "BG",
+   "HU",
+   "RS"
+  ],
+  "active": true,
+  "timezone": "Europe/Bucharest",
+  "biggest_gen_capacity": 1300.0,
+  "biggest_gen_name": "NPP Cernavoda"
+ },
+ "LT": {
+  "name": "Lithuania",
+  "neighbours": [
+   "LV",
+   "PL"
+  ],
+  "active": true,
+  "timezone": "Europe/Vilnius",
+  "biggest_gen_capacity": 1045.0,
+  "biggest_gen_name": "Lietuvos elektrine"
+ },
+ "BG": {
+  "name": "Bulgaria",
+  "neighbours": [
+   "GR",
+   "MK",
+   "RO",
+   "RS"
+  ],
+  "active": true,
+  "timezone": "Europe/Sofia",
+  "biggest_gen_capacity": 2080.0,
+  "biggest_gen_name": "NPP_KOZLODUY"
+ },
+ "LV": {
+  "name": "Latvia",
+  "neighbours": [
+   "EE",
+   "LT"
+  ],
+  "active": true,
+  "timezone": "Europe/Riga",
+  "biggest_gen_capacity": 894.0,
+  "biggest_gen_name": "Plavinas HPP"
+ },
+ "BA": {
+  "name": "Bosnia and Herzegovina",
+  "neighbours": [
+   "HR",
+   "ME",
+   "RS"
+  ],
+  "active": true,
+  "timezone": "Europe/Sarajevo",
+  "biggest_gen_capacity": 730.0,
+  "biggest_gen_name": "TE_TUZLA"
+ },
+ "SK": {
+  "name": "Slovakia",
+  "neighbours": [
+   "CZ",
+   "HU",
+   "PL"
+  ],
+  "active": true,
+  "timezone": "Europe/Bratislava",
+  "biggest_gen_capacity": 1921.0,
+  "biggest_gen_name": "Mochovce"
+ },
+ "EE": {
+  "name": "Estonia",
+  "neighbours": [
+   "FI",
+   "LV"
+  ],
+  "active": true,
+  "timezone": "Europe/Tallinn",
+  "biggest_gen_capacity": 1369.0,
+  "biggest_gen_name": "Eesti Elektrijaam"
+ },
+ "FI": {
+  "name": "Finland",
+  "neighbours": [
+   "EE",
+   "NO"
+  ],
+  "active": true,
+  "timezone": "Europe/Helsinki",
+  "biggest_gen_capacity": 1600.0,
+  "biggest_gen_name": "Olkiluoto 3"
+ },
+ "MK": {
+  "name": "North Macedonia",
+  "neighbours": [
+   "BG",
+   "GR",
+   "RS"
+  ],
+  "active": true,
+  "timezone": "Europe/Skopje",
+  "biggest_gen_capacity": 699.0,
+  "biggest_gen_name": "BITOLA"
+ },
+ "PT": {
+  "name": "Portugal",
+  "neighbours": [
+   "ES"
+  ],
+  "active": true,
+  "timezone": "Europe/Lisbon",
+  "biggest_gen_capacity": 1176.0,
+  "biggest_gen_name": "Ribatejo"
+ },
+ "GR": {
+  "name": "Greece",
+  "neighbours": [
+   "AL",
+   "BG",
+   "IT",
+   "MK"
+  ],
+  "active": true,
+  "timezone": "Europe/Athens",
+  "biggest_gen_capacity": 811.0,
+  "biggest_gen_name": "MEGALOPOLI_V"
+ },
+ "IT": {
+  "name": "Italy",
+  "neighbours": [
+   "AT",
+   "FR",
+   "GR",
+   "ME",
+   "SI",
+   "CH"
+  ],
+  "active": true,
+  "timezone": "Europe/Rome",
+  "biggest_gen_capacity": 1064.0,
+  "biggest_gen_name": "IM_S01ENTRUP_ETQCHIOTAS_1"
+ },
+ "HR": {
+  "name": "Croatia",
+  "neighbours": [
+   "BA",
+   "HU",
+   "RS",
+   "SI"
+  ],
+  "active": true,
+  "timezone": "Europe/Zagreb",
+  "biggest_gen_capacity": null,
+  "biggest_gen_name": null
+ },
+ "DE": {
+  "name": "Germany",
+  "neighbours": [
+   "AT",
+   "BE",
+   "CZ",
+   "DK",
+   "FR",
+   "LU",
+   "NL",
+   "NO",
+   "PL",
+   "SE",
+   "CH"
+  ],
+  "active": true,
+  "timezone": "Europe/Berlin",
+  "biggest_gen_capacity": 3645,
+  "biggest_gen_name": "Neurath"
+ },
+ "LU": {
+  "name": "Luxembourg",
+  "neighbours": [
+   "DE"
+  ],
+  "active": true,
+  "timezone": "Europe/Luxembourg",
+  "biggest_gen_capacity": null,
+  "biggest_gen_name": null
+ },
+ "DK": {
+  "name": "Denmark",
+  "neighbours": [
+   "DE",
+   "NL"
+  ],
+  "active": true,
+  "timezone": "Europe/Copenhagen",
+  "biggest_gen_capacity": 815,
+  "biggest_gen_name": "Avedoerevaerket"
+ },
+ "NO": {
+  "name": "Norway",
+  "neighbours": [
+   "SE",
+   "FI"
+  ],
+  "active": true,
+  "timezone": "Europe/Oslo",
+  "biggest_gen_capacity": 1240.0,
+  "biggest_gen_name": "Kvilldal"
+ },
+ "SE": {
+  "name": "Sweden",
+  "neighbours": [
+   "DK",
+   "FI",
+   "NO",
+   "DE",
+   "PL"
+  ],
+  "active": true,
+  "timezone": "Europe/Stockholm",
+  "biggest_gen_capacity": 830.0,
+  "biggest_gen_name": "Harspranget"
+ },
+ "CY": {
+  "name": "Cyprus",
+  "neighbours": [
+  ],
+  "active": true,
+  "timezone": "Asia/Nicosia",
+  "biggest_gen_capacity": 0.0,
+  "biggest_gen_name": ""
+ },
+ "AL": {
+  "name": "Albania",
+  "neighbours": [
+   "RS",
+   "ME",
+   "GR"
+  ],
+  "active": true,
+  "timezone": "Europe/Tirane",
+  "biggest_gen_capacity": 600.0,
+  "biggest_gen_name": "Komang"
+ }
+}
