@@ -227,5 +227,18 @@ To execute for a specific launch time and set a specific lookback period
 ```
 
 
-## [Devs] How to add new table?
+## Contacts:
+
+If you have any questions regarding this project, please contact the following people:
+
+Developers (SW source code / methodology questions):
+  - José Andrade <jose.r.andrade@inesctec.pt>
+  - Carlos Silva <carlos.silva@inesctec.pt>
+  - Carlos Pereira <carlos.m.pereira@inesctec.pt>
+  - Igor Abreu <igor.c.abreu@inesctec.pt>
+
+Developers (methodology questions):
+Contributors / Reviewers:
+  - Ricardo Bessa <ricardo.j.bessa@inesctec.pt>
+  - David Rua <david.e.rua@inesctec.pt>
 
