@@ -237,8 +237,7 @@ Developers (SW source code / methodology questions):
   - Carlos Pereira <carlos.m.pereira@inesctec.pt>
   - Igor Abreu <igor.c.abreu@inesctec.pt>
 
-Developers (methodology questions):
-Contributors / Reviewers:
+Contributors / Reviewers (methodology questions):
   - Ricardo Bessa <ricardo.j.bessa@inesctec.pt>
   - David Rua <david.e.rua@inesctec.pt>
 
