@@ -128,6 +128,23 @@ An overview of the full pipeline is available in the image below (press to zoom)
 <img src="docs/images/energy_app_pipeline.png" alt="drawing" width="800"/>
 
 
+### Outputs:
+
+Interoperable recommender provides, as output, hourly recommendations for all the active countries.
+The recommendations are provided in JSON format and are available in the `energy_app/files/output/` directory after each execution.
+
+The following outputs are available, per country:
+
+| variable        | type   | description                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|-----------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| drr             | float  | Deterministic rule for reserve (DRR)                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| reserve         | float  | Reserve capacity to meet the system risk threshold reserve   (of the risk-reserve capacity curve)                                                                                                                                                                                                                                                                                                                                                                     |
+| origin          | string | <ul>      <li>"individual" - recommendation based on risk mitigation   need for this country</li>      <li>"interconnection" - recommendation for this country, to   help mitigate risk in neighbour country</li>      </ul>                                                                                                                                                                                                                                          |
+| risk_evaluation | string | <ul>      <li>"not available' - no recommendation was issued (e.g., due to   insuficient data, or internal error)</li>      <li> 'healthy' - system not at risk of loss of load or energy   generation curtailment</li>      <li> 'increase' - system (or neighbour system) at risk and raised   need to increase energy consumption</li>      <li>'decrease' - system (or neighbour system) at risk and raised need   to decrease energy consumption</li>      </ul> |
+| risk_level      | int    | Risk threshold magnitude (0- healthy, 1-Low, 2-Medium,   3-high, 4-very high)                                                                                                                                                                                                                                                                                                                                                                                         |
+
+Besides storing this information in the local directory, it is currently also pushed to the EnergyAPP backend via HTTP POST request.
+
 ### Database maintenance / management:
 
 #### Table creation / migrations:
