@@ -11,6 +11,9 @@
 
 Preliminary documentation available at the project `docs/` directory.
 
+> **_NOTE:_** This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/).
+
+
 ## Initial setup:
 
 > **_NOTE:_**  The commands below assume that you are running them from the root directory of the project (`energy_app/`)
