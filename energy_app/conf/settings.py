@@ -12,7 +12,6 @@ BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # General Configs:
 N_JOBS = int(os.environ.get('N_JOBS', 1))
 ENTSOE_API_KEY = os.environ.get('ENTSOE_API_KEY', default='')
-ENERGY_APP_API_KEY = os.environ.get('ENERGY_APP_API_KEY', default='')
 POST_TO_ENERGY_APP = True if int(os.environ.get("POST_TO_ENERGY_APP", default=0)) == 1 else False
 LOCAL_TZ = "Europe/Lisbon"
 BACKUPS_PATH = os.path.join(BASE_PATH, "files", "backup")
@@ -34,6 +33,8 @@ ENERGYAPP = {
     'host': os.environ.get("ENERGYAPP_HOST", default=''),
     'port': int(os.environ.get("ENERGYAPP_PORT", default=5432)),
     'n_retries': int(os.environ.get("ENERGYAPP_N_RETRIES", default=3)),
+    'basepath': os.environ.get("ENERGYAPP_BASEPATH", default='/energy-app/api/v2'),
+    'apikey': os.environ.get('ENERGYAPP_APIKEY', default='')
 }
 
 
@@ -43,9 +44,6 @@ FORECAST_QUANTILES = np.arange(0.05, 1, 0.05)
 # Logs Configs:
 LOGS_DIR = os.path.join(BASE_PATH, "files", "logs")
 REPORTS_DIR = os.path.join(BASE_PATH, "files", "reports")
-EXECUTION_DIR = os.path.join(BASE_PATH, "files", "operational")
-OUTPUTS_DIR = os.path.join(EXECUTION_DIR, "outputs")
-INPUTS_DIR = os.path.join(EXECUTION_DIR, "inputs")
 
 # -- Initialize Logger:
 logs_kw = dict(

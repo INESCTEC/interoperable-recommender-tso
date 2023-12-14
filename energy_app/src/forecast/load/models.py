@@ -83,7 +83,7 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     logger.debug(f"{log_msg_} ... Ok!")
 
     # Readjust variables (remove incomplete inputs for forecast range)
-    valid_predictors = dclass.inputs.loc[forecast_range,].dropna(thresh=12, axis=1).columns  # noqa
+    valid_predictors = dclass.inputs.loc[forecast_range,].dropna(axis=1).columns  # noqa
     missing_cols = [x for x in X_train.columns if x not in valid_predictors]
     if len(missing_cols) > 0:
         logger.warning(f"[LoadForecast:{country_code}] Inputs {missing_cols} "
@@ -105,6 +105,7 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     # Fit / Predict:
     log_msg_ = f"[LoadForecast:{country_code}]] Model Fitting ..."
     logger.debug(log_msg_)
+    logger.debug(f"[LoadForecast:{country_code}]] Train X data shape {X_train.shape}")  # noqa
     model.fit_model(x=X_train, y=y_train)
     logger.debug(f"{log_msg_} ... Ok!")
 
@@ -112,6 +113,9 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     logger.debug(log_msg_)
     # Forecast. Note, Isotonic Regression is used to fix quantile crossing
     pred = model.forecast(x=X_test, reorder_quantiles=True)
+    # Ensure that we do not have negative values
+    # (it might happen on lower QT, as we're using a LQR model)
+    pred = pred.clip(lower=0)
     logger.debug(f"[LoadForecast:{country_code}]] Output shape: {pred.shape}")
     logger.debug(f"{log_msg_} ... Ok!")
 

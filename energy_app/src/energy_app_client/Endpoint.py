@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 from collections import namedtuple
+from conf import settings
 
+api_basepath = settings.ENERGYAPP["basepath"]
 fields = ('GET', 'POST', 'uri')
 endpoint = namedtuple('endpoint', fields)
 
@@ -10,7 +12,7 @@ endpoint = namedtuple('endpoint', fields)
 http_methods = "GET", "POST"
 
 # Authentication
-post_actions = endpoint(*http_methods, f"/energy-app/api/recommendations")
+post_actions = endpoint(*http_methods, f"{api_basepath}/recommendations")
 
 
 @dataclass(frozen=True)

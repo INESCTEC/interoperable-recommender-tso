@@ -47,7 +47,7 @@ def calculate_risk(countries_qt_forecast):
         system_margin = SM_computations()
 
         # compute system margin curve
-        system_margin.all_uncertainty(qt_load_values, qt_load, qt_res_values, qt_res,
+        system_margin.all_uncertainty(country_code, qt_load_values, qt_load, qt_res_values, qt_res,
                                       saldo_intercon=np.zeros((country_forecasts['load']['total'].shape[0])))
         logger.debug(f"{log_msg_} ... Ok!")
 
@@ -63,11 +63,30 @@ def calculate_risk(countries_qt_forecast):
         sce_import = sce_import.groupby(sce_import.index)['value'].sum(min_count=mininum_data).to_list()
         # shift system margin curve
         for hour in range(0, country_forecasts['load']['total'].shape[0]):
-            # check for missing data and skip hour
-            if np.isnan([conventional_gen[hour], pumped_consumption[hour], sce_import[hour], sce_export[hour]]).any():
+            # check if all interconnections are available
+            sce_available = country_forecasts['data_validator']['sce'][hour]
+            if not sce_available:
                 system_margin.SM_list[hour].x = None
-                log_msg_ = f"[RiskReserve][Hour: {hour}]: No data to shift System Margin..."
-                logger.warning(log_msg_)
+                missing_import = country_forecasts['data_validator']['sce_missing'][hour]['import']
+                missing_export = country_forecasts['data_validator']['sce_missing'][hour]['export']
+                if missing_import:
+                    log_msg_ = (f"[RiskReserve:{country_code}][Hour:{hour}]: No data to shift System Margin... "
+                                f"Missing SCE import data from countries {missing_import}")
+                    logger.error(log_msg_)
+                if missing_export:
+                    log_msg_ = (f"[RiskReserve:{country_code}][Hour:{hour}]: No data to shift System Margin... "
+                                f"Missing SCE export data from countries {missing_export}")
+                    logger.error(log_msg_)
+                continue
+
+            # check for missing data and skip hour
+            headers = ['Conventional Generation', 'Pumped Consumption', 'SCE Import', 'SCE Export']
+            missing_data = [headers[i] for i, x in enumerate([conventional_gen[hour], pumped_consumption[hour],
+                                                              sce_import[hour], sce_export[hour]]) if np.isnan(x)]
+            if missing_data:
+                system_margin.SM_list[hour].x = None
+                log_msg_ = f"[RiskReserve:{country_code}][Hour:{hour}]: No data to shift System Margin... Missing {missing_data}"
+                logger.error(log_msg_)
                 continue
 
             if system_margin.SM_list[hour].x is not None:
@@ -80,7 +99,8 @@ def calculate_risk(countries_qt_forecast):
         logger.debug(log_msg_)
 
         reserves = reserve_level(
-            system_margin.SM_list, 
+            country_code,
+            system_margin.SM_list,
             index_name_up='LOLP', 
             index_value_up=settings.RISK_THRESHOLD,
             index_name_down='PWRE', 
@@ -92,10 +112,10 @@ def calculate_risk(countries_qt_forecast):
         log_msg_ = f"[RiskReserve:{country_code}] Compare Reserve with DRR  ..."
         logger.debug(log_msg_)
 
-        country_risk = get_risk_evaluation(country_forecasts, reserves)
+        country_risk = get_risk_evaluation(country_code, country_forecasts, reserves, system_margin)
         countries_risk[country_code] = country_risk
         
-        logger.debug(f"[RiskReserve:{country_code}] {countries_risk[country_code]}")
+        # logger.debug(f"[RiskReserve:{country_code}] {countries_risk[country_code]}")
         logger.debug(f"{log_msg_} ... Ok!")
 
         # Plot curves
@@ -215,8 +235,8 @@ class SM_computations:  # class discrete random variable
         self.Gen_list = list()
         self.Load_list = list()
     
-    def all_uncertainty(self, load_X, load_Fx, generation_X, generation_Fx, saldo_intercon):  # method for the subtraction of two random variables (the two arguments are the two random variables)
-        for i in range(load_X.shape[0]):  # for for each look-ahead time of day D+1
+    def all_uncertainty(self, country_code, load_X, load_Fx, generation_X, generation_Fx, saldo_intercon):  # method for the subtraction of two random variables (the two arguments are the two random variables)
+        for i in range(load_X.shape[0]):  # for each look-ahead time of day D+1
             L = rv(load_X[i, :], load_Fx, np.array([]))  # r.v. load
             
             G = rv(generation_X[i, :], generation_Fx, np.array([]))  # r.v. generation
@@ -230,20 +250,26 @@ class SM_computations:  # class discrete random variable
             except ValueError:
                 # if minus function fails due to NaN
                 SM.x, SM.Fx, SM.px = None, None, None
-                log_msg_ = f"[RiskReserve][Hour: {i}]: No data to calculate System Margin..."
-                logger.warning(log_msg_)
+                # check what quantile forecast is missing
+                headers = ['Generation', 'Load']
+                missing_data = [headers[i] for i, x in enumerate([G.x, L.x]) if np.isnan(x).any()]
+                log_msg_ = (f"[RiskReserve:{country_code}][Hour:{i}]: No data to calculate System Margin... "
+                            f"Check {missing_data} quantile forecasts...")
+                logger.error(log_msg_)
             
             self.Load_list.append(L)  # list with the rv load
             self.Gen_list.append(G)  # list with the rv generation
             self.SM_list.append(SM)  # list with the rv system margin
 
 
-def reserve_level(SM,  # system margin after applying SM_computations() class
-                  index_name_up,  # possibilities: 'LOLP', 'LOLE [min/h]', 'EENS [MWh]'
-                  index_value_up,  # risk for up reserve: e.g.0.001 means 0.1%
-                  index_name_down,  # possibilieties: 'PWRE', 'WREE [min/h]', 'ESE [MWh]'
-                  index_value_down,  # risk for down reserve: e.g.0.001 means 0.1%
-                  ): 
+def reserve_level(
+        country_code,
+        SM,  # system margin after applying SM_computations() class
+        index_name_up,  # possibilities: 'LOLP', 'LOLE [min/h]', 'EENS [MWh]'
+        index_value_up,  # risk for up reserve: e.g.0.001 means 0.1%
+        index_name_down,  # possibilities: 'PWRE', 'WREE [min/h]', 'ESE [MWh]'
+        index_value_down,  # risk for down reserve: e.g.0.001 means 0.1%
+        ):
 
     risk_curves_up = list()
     risk_curves_down = list()
@@ -263,8 +289,8 @@ def reserve_level(SM,  # system margin after applying SM_computations() class
             risk_curves_down.append(None)
             reserve_needs_up = np.hstack((reserve_needs_up, None))
             reserve_needs_down = np.hstack((reserve_needs_down, None))
-            log_msg_ = f"[RiskReserve][Hour: {i}]: No data to calculate Reserve Level..."
-            logger.warning(log_msg_)
+            log_msg_ = f"[RiskReserve:{country_code}][Hour:{i}]: No data to calculate Reserve Level... Missing System Margin ..."
+            logger.error(log_msg_)
             continue
 
         r_inc = 5
@@ -304,7 +330,7 @@ def reserve_level(SM,  # system margin after applying SM_computations() class
         while True:
             new_SM_down = sm.x - float(R)
             Reserve_down = np.hstack((Reserve_down, float(R)))
-            
+
             if index_name_down == 'PWRE':
                 index_down = np.hstack((index_down, sm.px[(new_SM_down > 0.0).nonzero()[0]].sum()))
             
@@ -331,11 +357,13 @@ def reserve_level(SM,  # system margin after applying SM_computations() class
         try:
             ord = index_up.ravel().argsort()  # order the arrays
             func_up = scipy.interpolate.interp1d(index_up[ord], Reserve_up[ord])  # interpolation of the relation (Reserva/ Valor da medida de risco escolhida)
-            
+
             reserve_needs_up = np.hstack((reserve_needs_up, func_up(index_value_up)))  # determination of the reserve accordindly with the reference risk
         except ValueError:
             reserve_needs_up = np.hstack((reserve_needs_up, 0.0))
-        
+            log_msg_ = f"[RiskReserve:{country_code}][Hour:{i}]: Failed Reserve Up Calculation ..."
+            logger.error(log_msg_)
+
         try:
             ord = index_down.ravel().argsort()  # order the arrays
             func_down = scipy.interpolate.interp1d(index_down[ord], Reserve_down[ord])  # interpolation of the relation
@@ -343,6 +371,8 @@ def reserve_level(SM,  # system margin after applying SM_computations() class
             reserve_needs_down = np.hstack((reserve_needs_down, func_down(index_value_down)))  # determination of the reserve accordindly with the reference risk
         except ValueError:
             reserve_needs_down = np.hstack((reserve_needs_down, 0.0))
+            log_msg_ = f"[RiskReserve:{country_code}][Hour:{i}]: Failed Reserve Down Calculation ..."
+            logger.error(log_msg_)
 
     output = np.zeros((reserve_needs_up.shape[0], 2))
     output[:, 0] = reserve_needs_up
@@ -357,7 +387,7 @@ def reserve_level(SM,  # system margin after applying SM_computations() class
     return out
 
 
-def get_risk_evaluation(country_forecasts, reserves):
+def get_risk_evaluation(country_code, country_forecasts, reserves, system_margin):
     # reserves: reserves dict output of risk_curve 
     largest_unit_country = country_forecasts['generation']['biggest_gen_capacity']
     largest_pump_unit = country_forecasts['load']['max_pump_historical']
@@ -373,6 +403,11 @@ def get_risk_evaluation(country_forecasts, reserves):
 
         # continue to next hour if reserve values or largest unit is not available
         if np.isnan(reserve_needs_up) or np.isnan(reserve_needs_down) or largest_unit_country is None:
+            # check what information is missing
+            headers = ['Reserve Up', 'Reserve Down']
+            missing_data = [headers[i] for i, x in enumerate([reserve_needs_up, reserve_needs_down]) if np.isnan(x)]
+            if largest_unit_country is None:
+                missing_data.append('Largest Unit')
             # prepare default output structure
             country_risk[timestep] = {
                 'upward': {
@@ -388,8 +423,22 @@ def get_risk_evaluation(country_forecasts, reserves):
                     'risk_level': None
                 }
             }
-            log_msg_ = f"[RiskReserve][Hour: {timestep}]: No data to calculate Risk Level..."
-            logger.warning(log_msg_)
+
+            # add debug information
+            country_risk[timestep]['debug'] = {
+                'system_margin_x': None,
+                'system_margin_y': None,
+                'reserve_curve_up_x': None,
+                'reserve_curve_up_y': None,
+                'reserve_needs_up': reserve_needs_up,
+                'reserve_curve_down_x': None,
+                'reserve_curve_down_y': None,
+                'reserve_needs_down': reserve_needs_down,
+                'risk_threshold': settings.RISK_THRESHOLD
+            }
+
+            log_msg_ = f"[RiskReserve:{country_code}][Hour:{timestep}]: No data to calculate Risk Level... Missing {missing_data}"
+            logger.error(log_msg_)
             continue
 
         # get MAPE of Generation Forecasts
@@ -403,7 +452,11 @@ def get_risk_evaluation(country_forecasts, reserves):
 
         # Risk (upward)
         # calculate Deterministic Rule for Reserve (DRR)
-        drr_up_country = largest_unit_country + gen_drr + load_drr
+        coeff_a = 10  # MW
+        coeff_b = 150  # MW
+        drr_up_secondary = np.sqrt(coeff_a * country_forecasts['load']['total']['q50'].max() + coeff_b ** 2) - coeff_b
+        drr_up_tertiary = largest_unit_country + gen_drr + load_drr
+        drr_up_country = drr_up_secondary + drr_up_tertiary
 
         # If R <= DRR -> Healthy
         if reserve_needs_up <= drr_up_country:
@@ -434,7 +487,15 @@ def get_risk_evaluation(country_forecasts, reserves):
 
         # Risk (downward)
         # Calculate Deterministic Rule for Reserve (DRR)
-        drr_down_country = largest_pump_unit + gen_drr + load_drr
+        # todo: temporary fix (use same reference as upward reserve)
+        #  exception for PT and ES
+        #  remove to revert to previous logic
+        if country_code not in ['ES', 'PT']:
+            largest_pump_unit = largest_unit_country
+        # --
+        drr_down_secondary = np.sqrt(coeff_a * country_forecasts['load']['total']['q50'].max() + coeff_b ** 2) - coeff_b
+        drr_down_tertiary = largest_pump_unit + gen_drr + load_drr
+        drr_down_country = drr_down_secondary + drr_down_tertiary
 
         # If R <= DRR -> Healthy
         if reserve_needs_down <= drr_down_country:
@@ -476,6 +537,19 @@ def get_risk_evaluation(country_forecasts, reserves):
                 'risk_evaluation': evaluation_risk_down,
                 'risk_level': risk_level_down
             }
+        }
+
+        # add debug information
+        country_risk[timestep]['debug'] = {
+            'system_margin_x': system_margin.SM_list[timestep].x.tolist(),
+            'system_margin_y': system_margin.SM_list[timestep].px.tolist(),
+            'reserve_curve_up_x': reserves['reserves_tested_up'][timestep].tolist(),
+            'reserve_curve_up_y': reserves['discrete_risk_curves_up'][timestep].tolist(),
+            'reserve_needs_up': reserve_needs_up,
+            'reserve_curve_down_x': reserves['reserves_tested_down'][timestep].tolist(),
+            'reserve_curve_down_y': reserves['discrete_risk_curves_down'][timestep].tolist(),
+            'reserve_needs_down': reserve_needs_down,
+            'risk_threshold': settings.RISK_THRESHOLD
         }
 
     return country_risk

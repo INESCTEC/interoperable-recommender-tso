@@ -4,13 +4,16 @@
 RECOMMENDER_PATH=<insert_recommender_project_path_here>
 
 # [Every hour] Run ENTSO-E TP data acquisition:
-0 * * * * cd $RECOMMENDER_PATH && docker compose run --rm energy_app python main_data_acquisition.py --lookback_days=7
+30 17 * * * cd $RECOMMENDER_PATH && docker compose run --rm energy_app python main_data_acquisition.py --lookback_days=7
 
 # [Every day at 18h UTC] Run main script (forecast + recommender pipeline):
 0 18 * * * cd $RECOMMENDER_PATH && docker compose run --rm energy_app python main.py
 
-# [Every day] Run db maintenance scripts
+# [Every day] Run db maintenance scripts:
 # [at 00h00 UTC] Backup database
 0 0 * * * cd $RECOMMENDER_PATH && docker compose run --rm energy_app python db_maintenance.py backup database --file_name=/app/files/backup/recommender_`date +20\%y\%m\%d`.bak
 # [at 23h00 UTC] Vacuum database
 0 23 * * * cd $RECOMMENDER_PATH && docker compose run --rm energy_app python db_maintenance.py vacuum database
+
+# [Every Day] Run file cleaning routine:
+00 00 * * * find /app/files/backup/ -type f -mtime +31 -exec rm -rf {} \;

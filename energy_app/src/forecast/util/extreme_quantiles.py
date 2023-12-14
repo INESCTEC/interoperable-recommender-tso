@@ -89,8 +89,10 @@ def exponential_MLE(qf_test, qf_train, y_train, Cmax, h=200,
     # RETURN: quantiles [Q(p), qf_test, Q(rev(1-p)) estimated through exponetial functions
     assert qf_test.shape[1] == qf_train.shape[1], 'qf lines != qf_train cols'
     p = np.asarray(p)
-
+    # Prevent quantile crossing:
+    qf_train = np.apply_along_axis(np.sort, 1, qf_train)
     quantiles_test = np.zeros((qf_test.shape[0], 2 * len(p) + qf_test.shape[1]))
+
     for obs_ in range(qf_test.shape[0]):
         # sort qf and qf_train. it would be better to use isotonic regression
         qf = np.sort(qf_test[obs_, :])
@@ -98,35 +100,50 @@ def exponential_MLE(qf_test, qf_train, y_train, Cmax, h=200,
         d = np.apply_along_axis(lambda x: np.max(np.abs(x - qf)), 1, qf_train)
         pos = np.argsort(d)
 
-        if qf[-1] < Cmax:
-            qf_train = np.apply_along_axis(np.sort, 1, qf_train)
-
+        if np.isnan(qf[-1]):
+            hq_sup = np.array([np.nan] * len(p))
+        elif qf[-1] < Cmax:
             Y_sup = y_train[pos]
             Y_sup = Y_sup[Y_sup > qf[-1]]
             Y_sup = Y_sup[:h]
 
+            # New Cmax to be considered for upper extreme quantile
+            Cmax_adapt = np.max(Y_sup)
+
             # Minimise minus log-likelihood
             start = np.mean(Y_sup)
             sol = scipy.optimize.minimize(mMLEsup, start,
-                                          (Y_sup, qf[-1], alpha_max), "L-BFGS-B",
+                                          (Y_sup, qf[-1], alpha_max),
+                                          "L-BFGS-B",
                                           bounds=[(alpha_min + 0.01, 1000)])
             rho_sup = sol.x[0]
             psup = 1 - p
-            hq_sup = Cmax * (1 - (1 - (qf[-1] / Cmax)) * (np.log((1 - alpha_max) / rho_sup) / np.log((1 - psup) / rho_sup)))
-
+            hq_sup = Cmax_adapt * (1 - (1 - (qf[-1] / Cmax_adapt)) *
+                                   (np.log((1 - alpha_max) / rho_sup) /
+                                    np.log((1 - psup) / rho_sup)))
         else:
             hq_sup = np.array([Cmax] * len(p))
 
         Y_inf = y_train[pos]
         Y_inf = Y_inf[Y_inf <= qf[0]]
-        Y_inf = Y_inf[:h]
 
-        start = np.mean(Y_inf)
-        sol = scipy.optimize.minimize(mMLEinf, start,
-                                      (Y_inf, qf[0], alpha_min), "L-BFGS-B",
-                                      bounds=[(alpha_min + 0.01, 1000)])
-        rho_inf = sol.x[0]
-        hq_inf = qf[0] * (np.log(alpha_min / rho_inf) / np.log(p / rho_inf))
+        if len(Y_inf) == 0:
+            hq_inf = np.array([qf[0]] * len(p))
+        else:
+            Y_inf = Y_inf[:h]
+            Cmin_adapt = np.min(Y_inf)
+            # Shift Y and Qt to left, based on Cmin_adapt
+            _Y_inf = Y_inf - Cmin_adapt
+            _qf_min = qf[0] - Cmin_adapt
+            start = np.mean(_Y_inf)
+            sol = scipy.optimize.minimize(mMLEinf, start,
+                                          (_Y_inf, _qf_min, alpha_min),
+                                          "L-BFGS-B",
+                                          bounds=[(alpha_min + 0.01, 1000)])
+            rho_inf = sol.x[0]
+            hq_inf = _qf_min * (np.log(alpha_min / rho_inf) / np.log(p / rho_inf))
+            hq_inf = hq_inf + Cmin_adapt
+
         quantiles_test[obs_, :] = np.concatenate((hq_inf, qf, hq_sup[::-1]))
 
     return quantiles_test
