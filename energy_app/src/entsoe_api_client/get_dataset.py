@@ -9,7 +9,7 @@ from loguru import logger
 
 from conf import settings
 from database import PostgresDB
-from .helpers import request_ntc_forecasts
+from .helpers import request_ntc_forecasts, request_sce_day_ahead
 
 
 def get_entsoe_data_3_retries(table_, client, country_code, start_date, end_date, neighbour="") -> pd.DataFrame:
@@ -27,12 +27,14 @@ def get_entsoe_data_3_retries(table_, client, country_code, start_date, end_date
             elif table_ == "generation_forecast":
                 df = client.query_generation_forecast(country_code, start=start_date, end=end_date).tz_convert("UTC")
             elif table_ == "scheduled_exchanges":
-                try:
-                    df = client.query_scheduled_exchanges(country_code, neighbour, start=start_date, end=end_date, dayahead=True).tz_convert("UTC")
-                except NoMatchingDataError:
-                    # if there is no 'day-ahead' variable data,
-                    # tries 'total' variable data
-                    df = client.query_scheduled_exchanges(country_code, neighbour, start=start_date, end=end_date, dayahead=False).tz_convert("UTC")
+                # Requests by country / control area:
+                # df = client.query_scheduled_exchanges(country_code, neighbour, start=start_date, end=end_date, dayahead=True).tz_convert("UTC")
+                # Requests by control area:
+                df = request_sce_day_ahead(entsoe_client=client,
+                                           from_country_code=country_code,
+                                           to_country_code=neighbour,
+                                           start_date=start_date,
+                                           end_date=end_date)
             elif table_ == "net_transfer_capacity":
                 df = request_ntc_forecasts(client, country_code, start_date, end_date)
             else:
@@ -78,75 +80,88 @@ def get_entsoe_dataset(country_details: dict,
         try:
             log_msg_ = "Requesting load consumption forecast ..."
             logger.debug(f"{log_msg_}")
-#            load_forecast = client.query_load_forecast(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            load_forecast = get_entsoe_data_3_retries("load_forecast", client, country_code, start_date, end_date)
+            try:
+                load_forecast = get_entsoe_data_3_retries("load_forecast", client, country_code, start_date, end_date)
 
-            load_forecast.rename(columns={
-                "Forecasted Load": "load_forecast",
-            }, inplace=True)
-            logger.debug(f"{log_msg_} Ok!\n")
+                load_forecast.rename(columns={"Forecasted Load": "load_forecast",}, inplace=True)
+                logger.debug(f"{log_msg_} Ok!\n")
+            except NoMatchingDataError:
+                load_forecast = pd.DataFrame(index=country_dataset.index)
+                logger.error(f"{log_msg_} No 'load_forecast' data!\n")
 
             log_msg_ = "Requesting load consumption actual ..."
             logger.debug(f"{log_msg_}")
-#            load_actual = client.query_load(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            load_actual = get_entsoe_data_3_retries("load_actual", client, country_code, start_date, end_date)
-
-            load_actual.rename(columns={
-                "Actual Load": "load_actual"
-            }, inplace=True)
-            logger.debug(f"{log_msg_} Ok!\n")
+            try:
+                load_actual = get_entsoe_data_3_retries("load_actual", client, country_code, start_date, end_date)
+                load_actual.rename(columns={"Actual Load": "load_actual"}, inplace=True)
+                logger.debug(f"{log_msg_} Ok!\n")
+            except NoMatchingDataError:
+                load_actual = pd.DataFrame(index=country_dataset.index)
+                logger.error(f"{log_msg_} No 'load_actual' data!\n")
 
             log_msg_ = "Requesting actual generation ..."
             logger.debug(f"{log_msg_}")
-#            generation = client.query_generation(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            generation = get_entsoe_data_3_retries("generation", client, country_code, start_date, end_date)
+            try:
+                generation = get_entsoe_data_3_retries("generation", client, country_code, start_date, end_date)
+                logger.debug(f"{log_msg_} Ok!\n")
+            except NoMatchingDataError:
+                generation = pd.DataFrame(index=country_dataset.index)
+                logger.error(f"{log_msg_} No 'generation' data!\n")
 
-            logger.debug(f"{log_msg_} Ok!\n")
-
-            log_msg_ = "Aggregating generation data ..."
-            logger.debug(f"{log_msg_}")
-            # Remove consumption and get only the sum
-            if isinstance(generation.columns, pd.MultiIndex):
-                generation = generation.loc[:, [col for col in generation.columns if 'Consumption' not in col[1]]]
-                generation.columns = generation.columns.get_level_values(0)
-            # Aggregated generation (with all sources)
-            generation['generation_actual'] = generation.sum(axis=1)
-            # Aggregated generation (with renewable energy sources)
-            res_columns = [x for x in generation.columns if x.startswith(("Solar", "Wind"))]
-            generation["res_generation_actual"] = generation[res_columns].sum(axis=1)
-            # Keep only aggregated columns
-            generation = generation[["generation_actual", "res_generation_actual"]]
-            logger.debug(f"{log_msg_} Ok!\n")
+            if not generation.empty:
+                log_msg_ = "Aggregating generation data ..."
+                logger.debug(f"{log_msg_}")
+                # Remove consumption and get only the sum
+                if isinstance(generation.columns, pd.MultiIndex):
+                    generation = generation.loc[:, [col for col in generation.columns if 'Consumption' not in col[1]]]
+                    generation.columns = generation.columns.get_level_values(0)
+                # Aggregated generation (with all sources)
+                generation['generation_actual'] = generation.sum(axis=1)
+                # Aggregated generation (with renewable energy sources)
+                res_columns = [x for x in generation.columns if x.startswith(("Solar", "Wind"))]
+                generation["res_generation_actual"] = generation[res_columns].sum(axis=1)
+                # Keep only aggregated columns
+                generation = generation[["generation_actual", "res_generation_actual"]]
+                logger.debug(f"{log_msg_} Ok!\n")
 
             log_msg_ = "Requesting RES generation forecasts data ..."
             logger.debug(f"{log_msg_}")
-#             res_generation_forecast = client.query_wind_and_solar_forecast(country_code, start=start_date, end=end_date, psr_type=None).tz_convert("UTC")
-            res_generation_forecast = get_entsoe_data_3_retries("res_generation_forecast", client, country_code, start_date, end_date)
-            res_generation_forecast["res_generation_forecast"] = res_generation_forecast.sum(axis=1)
-            logger.debug(f"{log_msg_} Ok!\n")
+            try:
+                res_generation_forecast = get_entsoe_data_3_retries("res_generation_forecast", client, country_code, start_date, end_date)
+                res_generation_forecast["res_generation_forecast"] = res_generation_forecast.sum(axis=1)
+                logger.debug(f"{log_msg_} Ok!\n")
+            except NoMatchingDataError:
+                res_generation_forecast = pd.DataFrame(index=country_dataset.index)
+                logger.error(f"{log_msg_} No 'res_generation_forecast' data!\n")
 
             log_msg_ = "Requesting total generation (and pump storage consumption) forecasts data ..."
             logger.debug(f"{log_msg_}")
-#            generation_forecast = client.query_generation_forecast(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            generation_forecast = get_entsoe_data_3_retries("generation_forecast", client, country_code, start_date, end_date)
-            pump_load_forecast = pd.DataFrame(index=generation_forecast.index)
+            try:
+                generation_forecast = get_entsoe_data_3_retries("generation_forecast", client, country_code, start_date, end_date)
+                pump_load_forecast = pd.DataFrame(index=generation_forecast.index)
+                logger.debug(f"{log_msg_} Ok!\n")
+            except NoMatchingDataError:
+                generation_forecast = pd.DataFrame(index=country_dataset.index)
+                pump_load_forecast = pd.DataFrame(index=country_dataset.index)
+                logger.error(f"{log_msg_} No 'generation_forecast' data!\n")
 
-            if isinstance(generation_forecast, pd.DataFrame):
-                # If dataframe, means has actual consumption (e.g. for PT)
-                # Note that 'pop' operation removes 'Actual Consumption'
-                # column from generation forecast dataframe
-                pump_load_forecast["pump_load_forecast"] = generation_forecast.pop("Actual Consumption").values
-            else:
-                # If series, means has no actual consumption (e.g. for ES)
-                generation_forecast = generation_forecast.to_frame()
-                # In these cases init pump_load_forecast to 0:
-                pump_load_forecast["pump_load_forecast"] = 0
-            # Rename columns:
-            generation_forecast.rename(
-                columns={"Actual Aggregated": "generation_forecast"},
-                inplace=True
-            )
-            logger.debug(f"{log_msg_} Ok!\n")
+            if not generation_forecast.empty:
+                if isinstance(generation_forecast, pd.DataFrame):
+                    # If dataframe, means has actual consumption (e.g. for PT)
+                    # Note that 'pop' operation removes 'Actual Consumption'
+                    # column from generation forecast dataframe
+                    pump_load_forecast["pump_load_forecast"] = generation_forecast.pop("Actual Consumption").values
+                else:
+                    # If series, means has no actual consumption (e.g. for ES)
+                    generation_forecast = generation_forecast.to_frame()
+                    # In these cases init pump_load_forecast to 0:
+                    pump_load_forecast["pump_load_forecast"] = 0
+                # Rename columns:
+                generation_forecast.rename(
+                    columns={"Actual Aggregated": "generation_forecast"},
+                    inplace=True
+                )
+                logger.debug(f"{log_msg_} Calculated pump data!\n")
 
             # Resample to specified frequency
             log_msg_ = f"Resampling data to '{freq}' freq ..."
@@ -177,24 +192,19 @@ def get_entsoe_dataset(country_details: dict,
                 log_msg_1_ = f"Downloading SCE & NTC ({country_code} -- {neighbour})"
                 logger.debug(f"{log_msg_1_}")
 
-                if not country_details.get(neighbour, {}).get("active", False):
-                    logger.warning(f"{log_msg_1_} ... Skipped (inactive)!")
-                    continue
+                # if not country_details.get(neighbour, {}).get("active", False):
+                #     logger.warning(f"{log_msg_1_} ... Skipped (inactive)!")
+                #     continue
 
                 try:
                     log_msg_2_ = f"Downloading SCE ({country_code} -- {neighbour})"
                     logger.debug(f"{log_msg_2_}")
-#                    scheduled_exchanges = client.query_scheduled_exchanges(
-#                        country_code, neighbour,
-#                        start=start_date,
-#                        end=end_date,
-#                        dayahead=False
-#                    ).tz_convert("UTC")
-
                     scheduled_exchanges = get_entsoe_data_3_retries("scheduled_exchanges", client, country_code,
                                                                     start_date, end_date, neighbour)
 
-                    scheduled_exchanges = scheduled_exchanges.to_frame()
+                    if isinstance(scheduled_exchanges, pd.Series):
+                        scheduled_exchanges = scheduled_exchanges.to_frame()
+
                     # Rename column of exchanges
                     scheduled_exchanges.columns = scheduled_exchanges.columns.astype(str)
                     scheduled_exchanges.columns.values[-1] = "SCE_" + neighbour
@@ -209,19 +219,15 @@ def get_entsoe_dataset(country_details: dict,
                     continue
             logger.debug(f"{log_msg_} Ok!\n")
 
-            log_msg_ = "Requesting NTC ..."
-            logger.debug(f"{log_msg_}")
-#            net_transfer_capacity = request_ntc_forecasts(
-#                entsoe_client=client,
-#                country_code=country_code,
-#                start_date=start_date,
-#                end_date=end_date,
-#            )
-            net_transfer_capacity = get_entsoe_data_3_retries("net_transfer_capacity", client, country_code, start_date, end_date)
-            # join
-            net_transfer_capacity.columns = [f"NTC_{x}" for x in net_transfer_capacity.columns]
-            country_dataset = country_dataset.join(net_transfer_capacity)
-            logger.debug(f"{log_msg_} Ok!\n")
+            if len(country_code_neighbours) > 0:
+                log_msg_ = "Requesting NTC ..."
+                logger.debug(f"{log_msg_}")
+                net_transfer_capacity = get_entsoe_data_3_retries("net_transfer_capacity", client, country_code, start_date, end_date)
+                # join
+                net_transfer_capacity.columns = [f"NTC_{x}" for x in net_transfer_capacity.columns]
+                country_dataset = country_dataset.join(net_transfer_capacity)
+                logger.debug(f"{log_msg_} Ok!\n")
+
             logger.success(f"Country {country_code} final dataset "
                            f"shape: {country_dataset.shape}")
             country_dataset.index.name = "datetime_utc"
@@ -264,8 +270,10 @@ def upload_dataset_to_db(country_code, country_neighbours, country_dataset):
     db.engine.connect()
 
     for data, table in rules.items():
-        df_ = country_dataset[[data]].copy().dropna()
+        if data not in country_dataset.columns:
+            continue
 
+        df_ = country_dataset[[data]].copy().dropna()
         if df_.empty:
             continue
 
@@ -276,13 +284,13 @@ def upload_dataset_to_db(country_code, country_neighbours, country_dataset):
         df_["updated_at"] = dt.datetime.utcnow()
         df_.rename(columns={data: "value"}, inplace=True)
 
-        db.insert_to_db(df=df_, table=table)
-#        db.upload_to_db(df=df_, table=table,
-#                        constraint_columns=["country_code", "timestamp_utc"])
+        if "actual" in table:
+            # If observed, update the current values in DB
+            db.upsert_to_db(df=df_, table=table)
+        else:
+            db.mass_insert_to_db(df=df_, table=table)
 
     for neighbour in country_neighbours:
-        if neighbour == "GB":
-            continue
         variable_name = f"SCE_{neighbour}"
         if variable_name in country_dataset.columns:
             df_sce_ = country_dataset[[variable_name]].copy().dropna()
@@ -294,11 +302,7 @@ def upload_dataset_to_db(country_code, country_neighbours, country_dataset):
                 df_sce_["updated_at"] = dt.datetime.utcnow()
                 df_sce_["to_country_code"] = neighbour
                 df_sce_.rename(columns={variable_name: "value"}, inplace=True)
-                db.insert_to_db(df=df_sce_, table="sce")
-                # db.upload_to_db(df=df_sce_, table="sce",
-                #                 constraint_columns=["from_country_code",
-                #                                     "to_country_code",
-                #                                     "timestamp_utc"])
+                db.upsert_to_db(df=df_sce_, table="sce")
 
         variable_name = f"NTC_{neighbour}"
         if variable_name in country_dataset.columns:
@@ -311,8 +315,4 @@ def upload_dataset_to_db(country_code, country_neighbours, country_dataset):
                 df_ntc_["updated_at"] = dt.datetime.utcnow()
                 df_ntc_["to_country_code"] = neighbour
                 df_ntc_.rename(columns={variable_name: "value"}, inplace=True)
-                db.insert_to_db(df=df_ntc_, table="ntc_forecast")
-                # db.upload_to_db(df=df_ntc_, table="ntc_forecast",
-                #                 constraint_columns=["from_country_code",
-                #                                     "to_country_code",
-                #                                     "timestamp_utc"])
+                db.upsert_to_db(df=df_ntc_, table="ntc_forecast")

@@ -21,7 +21,8 @@
    "BE",
    "GB",
    "DE",
-   "DK"
+   "DK",
+   "NO"
   ],
   "active": true,
   "timezone": "Europe/Amsterdam",
@@ -84,12 +85,15 @@
   "biggest_gen_capacity": 2056.0,
   "biggest_gen_name": "ETEM_______"
  },
- "UK": {
+ "GB": {
   "name": "United Kingdom",
   "neighbours": [
    "BE",
+   "DK",
    "FR",
-   "NL"
+   "IE",
+   "NL",
+   "NO"
   ],
   "active": true,
   "timezone": "Europe/London",
@@ -103,7 +107,8 @@
    "HR",
    "RO",
    "RS",
-   "SK"
+   "SK",
+   "SI"
   ],
   "active": true,
   "timezone": "Europe/Budapest",
@@ -126,7 +131,8 @@
   "neighbours": [
    "AT",
    "IT",
-   "HR"
+   "HR",
+   "HU"
   ],
   "active": true,
   "timezone": "Europe/Ljubljana",
@@ -141,6 +147,7 @@
    "BG",
    "HR",
    "HU",
+   "XK",
    "ME",
    "MK",
    "RO"
@@ -170,7 +177,8 @@
    "AL",
    "IT",
    "BA",
-   "RS"
+   "RS",
+   "XK"
   ],
   "active": true,
   "timezone": "Europe/Podgorica",
@@ -182,7 +190,9 @@
   "neighbours": [
    "BG",
    "HU",
-   "RS"
+   "RS",
+   "MD",
+   "UA"
   ],
   "active": true,
   "timezone": "Europe/Bucharest",
@@ -193,7 +203,8 @@
   "name": "Lithuania",
   "neighbours": [
    "LV",
-   "PL"
+   "PL",
+   "SE"
   ],
   "active": true,
   "timezone": "Europe/Vilnius",
@@ -206,7 +217,8 @@
    "GR",
    "MK",
    "RO",
-   "RS"
+   "RS",
+   "TR"
   ],
   "active": true,
   "timezone": "Europe/Sofia",
@@ -241,7 +253,8 @@
   "neighbours": [
    "CZ",
    "HU",
-   "PL"
+   "PL",
+   "UA"
   ],
   "active": true,
   "timezone": "Europe/Bratislava",
@@ -263,7 +276,8 @@
   "name": "Finland",
   "neighbours": [
    "EE",
-   "NO"
+   "NO",
+   "SE"
   ],
   "active": true,
   "timezone": "Europe/Helsinki",
@@ -275,6 +289,7 @@
   "neighbours": [
    "BG",
    "GR",
+   "XK",
    "RS"
   ],
   "active": true,
@@ -298,7 +313,8 @@
    "AL",
    "BG",
    "IT",
-   "MK"
+   "MK",
+   "TR"
   ],
   "active": true,
   "timezone": "Europe/Athens",
@@ -311,6 +327,7 @@
    "AT",
    "FR",
    "GR",
+   "MT",
    "ME",
    "SI",
    "CH"
@@ -330,8 +347,8 @@
   ],
   "active": true,
   "timezone": "Europe/Zagreb",
-  "biggest_gen_capacity": null,
-  "biggest_gen_name": null
+  "biggest_gen_capacity": 486,
+  "biggest_gen_name": "Zakucac"
  },
  "DE": {
   "name": "Germany",
@@ -356,18 +373,22 @@
  "LU": {
   "name": "Luxembourg",
   "neighbours": [
+   "BE",
    "DE"
   ],
   "active": true,
   "timezone": "Europe/Luxembourg",
-  "biggest_gen_capacity": null,
-  "biggest_gen_name": null
+  "biggest_gen_capacity": 3645,
+  "biggest_gen_name": "Neurath"
  },
  "DK": {
   "name": "Denmark",
   "neighbours": [
    "DE",
-   "NL"
+   "NL",
+   "NO",
+   "SE",
+   "GB"
   ],
   "active": true,
   "timezone": "Europe/Copenhagen",
@@ -377,8 +398,12 @@
  "NO": {
   "name": "Norway",
   "neighbours": [
+   "DK",
+   "FI",
+   "DE",
+   "NL",
    "SE",
-   "FI"
+   "GB"
   ],
   "active": true,
   "timezone": "Europe/Oslo",
@@ -390,8 +415,9 @@
   "neighbours": [
    "DK",
    "FI",
-   "NO",
    "DE",
+   "LT",
+   "NO",
    "PL"
   ],
   "active": true,
@@ -405,19 +431,40 @@
   ],
   "active": true,
   "timezone": "Asia/Nicosia",
-  "biggest_gen_capacity": 0.0,
-  "biggest_gen_name": ""
+  "biggest_gen_capacity": 460.0,
+  "biggest_gen_name": "Dhekelia"
  },
  "AL": {
   "name": "Albania",
   "neighbours": [
    "RS",
    "ME",
-   "GR"
+   "GR",
+   "XK"
   ],
   "active": true,
   "timezone": "Europe/Tirane",
   "biggest_gen_capacity": 600.0,
   "biggest_gen_name": "Komang"
+ },
+ "IE": {
+  "name": "Ireland",
+  "neighbours": [
+   "GB"
+  ],
+  "active": true,
+  "timezone": "Europe/London",
+  "biggest_gen_capacity": 855,
+  "biggest_gen_name": "Moneypoint Production"
+ },
+ "MT": {
+  "name": "Malta",
+  "neighbours": [
+   "IT"
+  ],
+  "active": true,
+  "timezone": "Europe/Malta",
+  "biggest_gen_capacity": 0,
+  "biggest_gen_name": "Not defined"
  }
 }

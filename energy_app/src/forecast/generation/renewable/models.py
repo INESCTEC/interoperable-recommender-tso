@@ -83,7 +83,7 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     logger.debug(f"{log_msg_} ... Ok!")
 
     # Readjust variables (remove incomplete inputs for forecast range)
-    valid_predictors = dclass.inputs.loc[forecast_range,].dropna(thresh=12, axis=1).columns  # noqa
+    valid_predictors = dclass.inputs.loc[forecast_range,].dropna(axis=1).columns  # noqa
     missing_cols = [x for x in X_train.columns if x not in valid_predictors]
     if len(missing_cols) > 0:
         logger.warning(f"[GenForecast:{country_code}] Inputs {missing_cols} "
@@ -91,6 +91,11 @@ def linear_quantile_regression(dataset: pd.DataFrame,
                        f"Unable to use as predictors.")
         X_train = X_train[valid_predictors]
         X_test = X_test[valid_predictors]
+
+    if "res_generation_forecast" not in missing_cols:
+        if "res_generation_actual_-1_week" in X_train.columns:
+            X_train = X_train.drop("res_generation_actual_-1_week", axis=1)
+            X_test = X_test.drop("res_generation_actual_-1_week", axis=1)
 
     log_msg_ = f"[GenForecast:{country_code}]] DropNA + Normalization ..."
     logger.debug(log_msg_)
@@ -105,6 +110,7 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     # Fit / Predict:
     log_msg_ = f"[GenForecast:{country_code}]] Model Fitting ..."
     logger.debug(log_msg_)
+    logger.debug(f"[GenForecast:{country_code}]] Train X data shape {X_train.shape}")  # noqa
     model.fit_model(x=X_train, y=y_train)
     logger.debug(f"{log_msg_} ... Ok!")
 
@@ -112,6 +118,9 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     logger.debug(log_msg_)
     # Forecast. Note, Isotonic Regression is used to fix quantile crossing
     pred = model.forecast(x=X_test, reorder_quantiles=True)
+    # Ensure that we do not have negative values
+    # (it might happen on lower QT, as we're using a LQR model)
+    pred = pred.clip(lower=0)
     logger.debug(f"[GenForecast:{country_code}]] Output shape: {pred.shape}")
     logger.debug(f"{log_msg_} ... Ok!")
 

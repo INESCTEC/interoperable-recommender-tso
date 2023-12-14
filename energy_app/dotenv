@@ -1,7 +1,8 @@
+# General configs:
+POST_TO_ENERGY_APP=1
+
 # Entsoe configs:
 ENTSOE_API_KEY=insert_api_key_here
-ENERGY_APP_API_KEY=insert_api_key_here
-POST_TO_ENERGY_APP=1
 
 # Database configs:
 POSTGRES_HOST=db_host
@@ -14,3 +15,5 @@ POSTGRES_PORT=db_port
 ENERGYAPP_HOST=host_here
 ENERGYAPP_PORT=port_here
 ENERGYAPP_N_RETRIES=3
+ENERGYAPP_APIKEY=insert_api_key_here
+ENERGYAPP_BASEPATH=/energy-app/api/v2

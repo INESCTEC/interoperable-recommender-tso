@@ -192,7 +192,8 @@ def calculate_entsoe_load_f_mape(db_engine, country_code, start_date, end_date):
     ON o.country_code = f.country_code AND o.timestamp_utc = f.timestamp_utc 
     WHERE o.country_code = '{country_code}' 
     AND o.timestamp_utc >= '{start_date}' 
-    AND o.timestamp_utc <= '{end_date}';
+    AND o.timestamp_utc <= '{end_date}' 
+    AND ABS((o.value - f.value) / NULLIF(o.value, 0)) < 100;
     """
     data = pd.read_sql_query(query, con=db_engine)
     return data.values[0][0]
@@ -206,7 +207,8 @@ def calculate_entsoe_gen_f_mape(db_engine, country_code, start_date, end_date):
     ON o.country_code = f.country_code AND o.timestamp_utc = f.timestamp_utc 
     WHERE o.country_code = '{country_code}' 
     AND o.timestamp_utc >= '{start_date}' 
-    AND o.timestamp_utc <= '{end_date}';
+    AND o.timestamp_utc <= '{end_date}' 
+    AND ABS((o.value - f.value) / NULLIF(o.value, 0)) < 100;
     """
     data = pd.read_sql_query(query, con=db_engine)
     return data.values[0][0]

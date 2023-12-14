@@ -27,7 +27,7 @@ from loguru import logger
 
 load_dotenv(".env")
 
-from conf import load_cli_args, settings
+from conf import load_cli_args_acquisition, settings
 from database import PostgresDB
 from database.read_queries import (get_country_info, get_data_availability, get_data_availability_ntc_sce)
 from src.forecast.generation.renewable import linear_quantile_regression as res_lqr  # noqa
@@ -45,7 +45,7 @@ logger.add(sys.stdout, level='DEBUG', **logs_kw)
 logger.add(os.path.join(settings.LOGS_DIR, "data_acquisition.log"), level='DEBUG', **logs_kw)
 
 # Load CLI arguments:
-launch_time, lookback_days = load_cli_args()
+launch_time, lookback_days = load_cli_args_acquisition()
 launch_time = pd.Timestamp(launch_time, tz='UTC')
 launch_date = launch_time.date()
 logger.info("-" * 79)
@@ -116,10 +116,10 @@ for table_ in settings.REPORT_TABLES_NTC_SCE:
             if not (to_country_code in data_for_logs_imp[table_]):
                 data_for_logs_imp[table_][to_country_code] = {}
             to_country_active = to_country_code
-            if to_country_active == "GB":
-                to_country_active = "UK"
-            if not COUNTRY_DETAILS[to_country_active]["active"]:
+
+            if not COUNTRY_DETAILS.get(to_country_active, {"active": False})["active"]:
                 continue
+
             ntc_sce_code = table_[:3] + "_" + from_country_code + "_" + to_country_code
 
             data = get_data_availability_ntc_sce(db.engine, from_country_code, to_country_code, table_,

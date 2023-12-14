@@ -95,7 +95,7 @@ def compute_actions(countries_details, countries_forecasts, countries_risk):
                     # skip this interconnection due to missing data
                     log_msg_ = f"[RiskCoordination:{country_code}|{interconnected_country}][Hour:{timestep}] " \
                                f"Missing NTC data..."
-                    logger.warning(log_msg_)
+                    logger.error(log_msg_)
                     continue
 
                 # what action should (if possible) the interconnected country j implement

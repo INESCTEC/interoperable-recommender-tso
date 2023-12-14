@@ -29,20 +29,23 @@ class PostgresDB:
     def execute_query(self, query):
         self.engine.execute(query)
 
+    def get_table_constraints(self, table_name):
+        metadata = MetaData(bind=self.engine)
+        table_ = Table(table_name, metadata, autoload=True)
+        const_cols = next(
+            constraint for constraint in table_.constraints if
+            isinstance(constraint, UniqueConstraint)
+        )
+        return [col.name for col in const_cols.columns]
+
     def insert_to_db(self, df, table):
         tuples = []
         for val in df.to_numpy():
-            tuples.append(
-                tuple(map(lambda x: None if str(x) == "nan" else x, val)))
-
-        metadata = MetaData(bind=self.engine)
-        table_ = Table(table, metadata, autoload=True)
+            tuples.append(tuple(map(lambda x: None if str(x) == "nan" else x, val)))  # noqa
 
         try:
-            unique_constraint = next(
-                constraint for constraint in table_.constraints if isinstance(constraint, UniqueConstraint))
-            unique_constraint_columns = [col.name for col in unique_constraint.columns]
-
+            constraint_columns = self.get_table_constraints(table)
+            constraint_columns = ','.join(constraint_columns)
             conn = self.engine.raw_connection()
             cursor = conn.cursor()
 
@@ -54,7 +57,7 @@ class PostgresDB:
                 query = f"""
                             INSERT INTO {table} ({', '.join(data.keys())})
                             VALUES ({', '.join('%s' for _ in data)})
-                            ON CONFLICT ({', '.join(unique_constraint_columns)})
+                            ON CONFLICT ({constraint_columns})
                             DO NOTHING
                         """
 
@@ -69,11 +72,40 @@ class PostgresDB:
             cursor.close()
             conn.close()
 
-    def upload_to_db(self, df, table, constraint_columns):
+    def mass_insert_to_db(self, df, table):
+        constraint_columns = self.get_table_constraints(table)
+        constraint_columns = ','.join(constraint_columns)
+
         tuples = []
         for val in df.to_numpy():
-            tuples.append(
-                tuple(map(lambda x: None if str(x) == "nan" else x, val)))
+            tuples.append(tuple(map(lambda x: None if str(x) == "nan" else x, val)))  # noqa
+
+        conflict_set = ','.join(list(df.columns))  # column names
+        try:
+            query = "INSERT INTO %s(%s) VALUES %%s " \
+                    "ON CONFLICT (%s) " \
+                    "DO NOTHING;" % (table, conflict_set, constraint_columns)
+            conn = self.engine.raw_connection()
+            cursor = conn.cursor()
+            extras.execute_values(cursor, query, tuples)
+            conn.commit()
+            cursor.close()
+            return 'Success.'
+        except IntegrityError as ex:
+            # todo: confirm this rollback operation in case of error
+            conn.rollback()
+            raise ex
+        finally:
+            cursor.close()
+            conn.close()
+
+    def upsert_to_db(self, df, table):
+        constraint_columns = self.get_table_constraints(table)
+        constraint_columns = ','.join(constraint_columns)
+
+        tuples = []
+        for val in df.to_numpy():
+            tuples.append(tuple(map(lambda x: None if str(x) == "nan" else x, val)))  # noqa
 
         conflict_set = ','.join(list(df.columns))  # column names
         excluded_set = ','.join('EXCLUDED.' + str(e) for e in df.columns)
@@ -91,7 +123,6 @@ class PostgresDB:
             if ex.pgcode == "23503":  # foreignkeyviolation code
                 raise Exception("Unable to insert data in DB.")
             elif ex.pgcode == "23505":  # Duplicate key:
-                constraint_columns = ','.join(constraint_columns)
                 query = "INSERT INTO %s(%s) VALUES %%s " \
                         "ON CONFLICT (%s) " \
                         "DO UPDATE SET (%s)=(%s);" % (table, conflict_set,
@@ -105,6 +136,9 @@ class PostgresDB:
                 return "Success. One or more database records were updated."
             else:
                 raise ex
+        finally:
+            cursor.close()
+            conn.close()
 
     def disconnect(self):
         self.engine.dispose()

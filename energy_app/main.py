@@ -42,12 +42,13 @@ from src.forecast.util.data_util import assure_transmission_dt_index
 from src.forecast.generation.conventional import calculate_cg_generation
 from src.convolution import risk_reserve
 from src.util.save import save_countries_data, save_risk_outputs, save_coordinated_risk  # noqa
+from src.util.validate import dataset_validator
 import src.risk_coordination as risk_coordination
 from src.energy_app_client import Controller
 
 
 # Load CLI arguments:
-launch_time, lookback_days = load_cli_args()
+launch_time, output_dir = load_cli_args()
 launch_time = pd.Timestamp(launch_time, tz='UTC')
 launch_date = launch_time.date()
 logger.info("-" * 79)
@@ -58,13 +59,13 @@ db = PostgresDB.instance(**settings.DATABASE)
 db.engine.connect()
 COUNTRY_DETAILS = get_country_info(db.engine)
 
-#########################
-# Set execution period  #
-#########################
+###########################
+# Set initial parameters  #
+###########################
 end_dt = pd.Timestamp(launch_date + pd.DateOffset(days=2), tz='UTC')
-start_dt = pd.Timestamp(end_dt.date() - pd.DateOffset(days=lookback_days),
-                        tz='UTC')
-logger.info(f"Data retrieval period: [{start_dt}:{end_dt}]")
+EXECUTION_DIR = os.path.join(settings.BASE_PATH, "files", output_dir)
+OUTPUTS_DIR = os.path.join(EXECUTION_DIR, "outputs")
+INPUTS_DIR = os.path.join(EXECUTION_DIR, "inputs")
 
 #####################################################################
 # Create load & generation quantile forecasts & Load system dataset #
@@ -74,7 +75,6 @@ log_msg_ = f"Preparing system dataset (forecasts + ENTSO-E info) ..."
 logger.info(log_msg_)
 logger.info(f"Quantiles: {settings.FORECAST_QUANTILES}")
 countries_qt_forecast = {}
-# todo: code refactoring - move pipeline to separate script
 for country_code, country_info in COUNTRY_DETAILS.items():
     if not country_info["active"]:
         logger.warning(f"[Forecast:{country_code}] Skipping "
@@ -205,6 +205,11 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         gen_mape = calculate_entsoe_gen_f_mape(db.engine, country_code,
                                                start_date=forec_start_dt,
                                                end_date=end_dt)
+
+        # Limit MAPE t 10% -> Avoids abnormally high maps for some countries
+        load_mape = min(load_mape, 0.10)
+        gen_mape = min(gen_mape, 0.10)
+
         # Get country biggest generator:
         country_max_gen = COUNTRY_DETAILS[country_code]["biggest_gen_capacity"]
         country_max_gen = None if np.isnan(country_max_gen) else country_max_gen  # noqa
@@ -212,6 +217,14 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         # Timestamp references:
         timestamp = cg_forecasts.index.tz_convert("UTC")
 
+        # Data Validator:
+        # -- Verify if SCE for all areas are available
+        validator = dataset_validator(
+            expected_dates=timestamp,
+            country_code=country_code,
+            sce_import=sce_import,
+            sce_export=sce_export
+        )
     except Exception:
         logger.exception(f"[Forecast:{country_code}] Unexpected error. "
                          f"Traceback below.")
@@ -221,6 +234,7 @@ for country_code, country_info in COUNTRY_DETAILS.items():
 
     # Store country data (to be used by risk-reserve module):
     countries_qt_forecast[country_code] = {
+        "data_validator": validator,
         "timestamp_utc": timestamp,
         "load": {
             "total": load_forecasts,
@@ -250,7 +264,7 @@ t0 = time()
 log_msg_ = f"Saving system dataset to disk ..."
 logger.info(log_msg_)
 save_status = save_countries_data(
-    inputs_dir=settings.INPUTS_DIR,
+    inputs_dir=INPUTS_DIR,
     countries_data=countries_qt_forecast,
     launch_time=launch_time
 )
@@ -275,7 +289,7 @@ log_msg_ = f"Saving risk results to disk ..."
 logger.info(log_msg_)
 save_status, failures = save_risk_outputs(
     countries_data=countries_qt_forecast,
-    outputs_dir=settings.OUTPUTS_DIR,
+    outputs_dir=OUTPUTS_DIR,
     countries_risk=countries_risk,
     launch_time=launch_time
 )
@@ -303,7 +317,7 @@ t0 = time()
 log_msg_ = f"Saving coordinated risk to disk ..."
 logger.info(log_msg_)
 save_status = save_coordinated_risk(
-    outputs_dir=settings.OUTPUTS_DIR,
+    outputs_dir=OUTPUTS_DIR,
     coordinated_risk=coordinated_risks,
     launch_time=launch_time,
     countries_details=COUNTRY_DETAILS,
@@ -320,7 +334,7 @@ else:
 coordinated_actions = []
 for country_code in list(coordinated_risks.index):
     lt_str = launch_time.strftime("%Y%m%d@%H%M")
-    file_dir = f"{settings.OUTPUTS_DIR}/{lt_str}/{country_code}/"
+    file_dir = f"{OUTPUTS_DIR}/{lt_str}/{country_code}/"
     file_path = os.path.join(file_dir, "coordinated_risk.json")
     os.makedirs(file_dir, exist_ok=True)
 
@@ -376,7 +390,7 @@ for country_code in list(coordinated_risks.index):
 if settings.POST_TO_ENERGY_APP:
     # Send coordinated actions to Energy APP backend
     controller = Controller()
-    controller.set_access_token(token=settings.ENERGY_APP_API_KEY)
+    controller.set_access_token(token=settings.ENERGYAPP["apikey"])
     for country_actions in coordinated_actions:
         # Post country actions to energy app
         try:

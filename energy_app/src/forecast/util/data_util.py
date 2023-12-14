@@ -30,7 +30,13 @@ def assure_transmission_dt_index(country_info, country_code,
     expected_df = pd.DataFrame(index_dict)
     index_keys_ = ["timestamp_utc", "from_country_code", "to_country_code"]
     expected_df.set_index(index_keys_, inplace=True)
+    # Find which triplets (index_keys_) are missing in original 'df':
+    missing_index = expected_df.index.difference(df.set_index(index_keys_).index)
     expected_df = expected_df.join(df.set_index(index_keys_))
+    # Fill ONLY missing triplets with zero (normally are the
+    # disabled - grey - countries in ENTSOE website):
+    expected_df.loc[missing_index, "value"] = 0
+    expected_df.dropna(inplace=True)
     expected_df.reset_index(drop=False, inplace=True)
     expected_df.set_index("timestamp_utc", inplace=True)
     return expected_df
