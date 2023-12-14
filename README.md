@@ -9,7 +9,6 @@
 [![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![Image Size](https://img.shields.io/badge/image%20size-1.71GB-blue.svg)]()
 
-Preliminary documentation available at the project `docs/` directory.
 
 > **_NOTE:_** This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/).
 
@@ -38,6 +37,7 @@ To launch the docker containers stack:
 ```
 
 **_NOTE:_**  This will launch the database container and the 'energy_app' container. Note that both database schema will be initialized and the database migrations will be applied.
+
 **_NOTE:_**  The entrypoint of 'energy_app' container also runs the 'load_db_fixtures.py' script which fills the 'country' and 'country_neighbours' tables with data from the 'database/fixtures/countries.json' file.
 
 
@@ -56,7 +56,7 @@ If you prefer using your local python interpreter (instead of docker), you'll ne
      ```
 2. Start the database container
     ```shell
-        $ docker compose up -d timescaledb
+        $ docker compose up -d postgresql
     ```
 3. Apply the database migrations
     ```shell
@@ -94,7 +94,7 @@ This will trigger the entire process of data ETL. Namely:
 
   1. Data retrieval from ENTSO-E Transparency Platform (via it's [REST API](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html))
   2. Data manipulation and transformation (e.g., aggregate data by control area for NTC forecasts)
-  3. Data load to the central database (PostgreSQL / TimescaleDB)
+  3. Data load to the central database (PostgreSQL)
 
 > **_IMPORTANT:_** We recommend you run the data acquisition pipeline with a 
 > lookback period to minimize the amount of missing historical data. 
@@ -172,7 +172,7 @@ We use `alembic` library for database migrations. To create a new table, follow 
 This software includes a database management tool. Which backups the database to a local file. To run the backup script, execute the following command:
 
 ```shell
-   $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py backup database --file_name=<file_path_here>
+   $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup database --file_name=<file_path_here>
 ```
 
 ##### To CSVs:
@@ -180,12 +180,12 @@ This software includes a database management tool. Which backups the database to
 Alternatively, the database can be backed up to CSV. To run the backup script, execute the following command:
 
 ```shell
-   $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py backup table
+   $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup table
 ```
 
 > **_NOTE:_** There are multiple backup options. You can check the available options via:
 > ```shell
->  $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py backup --help
+>  $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup --help
 > ```
 
 #### Database VACUUM:
@@ -193,7 +193,7 @@ Alternatively, the database can be backed up to CSV. To run the backup script, e
 Database optimization ops are also available (and frequently executed). To run a DB vacuum:
 
 ```shell
-   $ docker-compose -f docker-compose.prod.yml run --rm energy_app python db_maintenance.py vacuum database
+   $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py vacuum database
 ```
 
 ### Database full reset:
@@ -243,7 +243,7 @@ To execute for a specific launch time and set a specific lookback period
 
 ```shell
   # Retrieve ENTSOE data for the 30 days prior to 2023-06-01T00:00:00Z
-  $ python main.py --launch_time "2023-06-01T00:00:00Z" --lookback_days 30
+  $ python main.py --launch_time="2023-06-01T00:00:00Z" --lookback_days=30
 ```
 
 
