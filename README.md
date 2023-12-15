@@ -9,10 +9,15 @@
 [![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![Image Size](https://img.shields.io/badge/image%20size-1.71GB-blue.svg)]()
 
+-----------------------------------------------------
 
-The Interoperable Recommender is a data-driven solution aimed at enabling the participation of consumers in enhancing the resilience of the European energy infrastructure. This novel service harnesses the potential of innovative algorithms and leverages the publicly accessible ENTSO-E Transparency Platform to assess country-specific vulnerabilities related to loss of load and generation curtailment. 
+## Overview
+
+The **Interoperable Recommender** is a data-driven solution aimed at enabling the participation of consumers in enhancing the resilience of the European energy infrastructure. This novel service harnesses the potential of innovative algorithms and leverages the publicly accessible ENTSO-E Transparency Platform to assess country-specific vulnerabilities related to loss of load and generation curtailment. 
 
 The main goal is to enable energy applications to empower European citizens with actionable recommendations on a national level, encouraging adaptive energy consumption during periods of expected system vulnerability. The service provides day-ahead hourly recommendations, tailored to meet the unique needs of each country while accounting for interconnections within the broader European network.
+
+> **_NOTE:_** This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/).
 
 Below you can find a list of countries for which recommendations can be generated (limited by data availability on ENTSO-E TP platform).
 
@@ -53,9 +58,6 @@ Below you can find a list of countries for which recommendations can be generate
 | SE             | Sweden                 |
 | SI             | Slovenia               |
 | SK             | Slovakia               |
-
-
-> **_NOTE:_** This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/).
 
 
 ## Initial setup:
@@ -305,4 +307,3 @@ Developers (SW source code / methodology questions):
 Contributors / Reviewers (methodology questions):
   - Ricardo Bessa <ricardo.j.bessa@inesctec.pt>
   - David Rua <david.e.rua@inesctec.pt>
-
