@@ -4,7 +4,7 @@
 
 -----------------------------------------------------
 
-[![version](https://img.shields.io/badge/version-0.0.1-blue.svg)]()
+[![version](https://img.shields.io/badge/version-1.0.1-blue.svg)]()
 [![status](https://img.shields.io/badge/status-production-brightgreen.svg)]()
 [![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![Image Size](https://img.shields.io/badge/image%20size-1.71GB-blue.svg)]()
