@@ -10,6 +10,51 @@
 [![Image Size](https://img.shields.io/badge/image%20size-1.71GB-blue.svg)]()
 
 
+The Interoperable Recommender is a data-driven solution aimed at enabling the participation of consumers in enhancing the resilience of the European energy infrastructure. This novel service harnesses the potential of innovative algorithms and leverages the publicly accessible ENTSO-E Transparency Platform to assess country-specific vulnerabilities related to loss of load and generation curtailment. 
+
+The main goal is to enable energy applications to empower European citizens with actionable recommendations on a national level, encouraging adaptive energy consumption during periods of expected system vulnerability. The service provides day-ahead hourly recommendations, tailored to meet the unique needs of each country while accounting for interconnections within the broader European network.
+
+Below you can find a list of countries for which recommendations can be generated (limited by data availability on ENTSO-E TP platform).
+
+| country_code   | country_name           |
+|:---------------|:-----------------------|
+| AL             | Albania                |
+| AT             | Austria                |
+| BA             | Bosnia and Herzegovina |
+| BE             | Belgium                |
+| BG             | Bulgaria               |
+| CH             | Switzerland            |
+| CY             | Cyprus                 |
+| CZ             | Czech Republic         |
+| DE             | Germany                |
+| DK             | Denmark                |
+| EE             | Estonia                |
+| ES             | Spain                  |
+| FI             | Finland                |
+| FR             | France                 |
+| GB             | United Kingdom         |
+| GR             | Greece                 |
+| HR             | Croatia                |
+| HU             | Hungary                |
+| IE             | Ireland                |
+| IT             | Italy                  |
+| LT             | Lithuania              |
+| LU             | Luxembourg             |
+| LV             | Latvia                 |
+| ME             | Montenegro             |
+| MK             | North Macedonia        |
+| MT             | Malta                  |
+| NL             | Netherlands            |
+| NO             | Norway                 |
+| PL             | Poland                 |
+| PT             | Portugal               |
+| RO             | Romania                |
+| RS             | Serbia                 |
+| SE             | Sweden                 |
+| SI             | Slovenia               |
+| SK             | Slovakia               |
+
+
 > **_NOTE:_** This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/).
 
 
