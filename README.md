@@ -17,7 +17,8 @@ The **Interoperable Recommender** is a data-driven solution aimed at enabling th
 
 The main goal is to enable energy applications to empower European citizens with actionable recommendations on a national level, encouraging adaptive energy consumption during periods of expected system vulnerability. The service provides day-ahead hourly recommendations, tailored to meet the unique needs of each country while accounting for interconnections within the broader European network.
 
-> **_NOTE:_** This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/).
+> [!IMPORTANT]
+> This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/). See the official [booklet](docs/interconnect-booklet.pdf) for more details.
 
 Below you can find a list of countries for which recommendations can be generated (limited by data availability on ENTSO-E TP platform).
 
