@@ -63,7 +63,8 @@ Below you can find a list of countries for which recommendations can be generate
 
 ## Initial setup:
 
-> **_NOTE:_**  The commands below assume that you are running them from the root directory of the project (`energy_app/`)
+> [!WARNING]
+> The following commands assume that you are running them from the root directory of the project (`energy_app/`)
 
 ### Configure environment variables:
 
@@ -73,7 +74,8 @@ To configure the environment variables, copy the `dotenv` file to `.env` and fil
 ```shell
    $ cp dotenv .env
 ```
-**_NOTE:_** In windows, just copy-paste the `dotenv` file and rename it to `.env`.
+> [!NOTE]
+>  In windows, just copy-paste the `dotenv` file and rename it to `.env`.
 
 
 ### With Docker:
@@ -84,9 +86,11 @@ To launch the docker containers stack:
    $ docker compose up -d
 ```
 
-**_NOTE:_**  This will launch the database container and the 'energy_app' container. Note that both database schema will be initialized and the database migrations will be applied.
+> [!IMPORTANT]
+> This will launch the database container and the 'energy_app' container. Note that both database schema will be initialized and the database migrations will be applied.
 
-**_NOTE:_**  The entrypoint of 'energy_app' container also runs the 'load_db_fixtures.py' script which fills the 'country' and 'country_neighbours' tables with data from the 'database/fixtures/countries.json' file.
+> [!IMPORTANT]
+> The entrypoint (file `entrypoint.sh`) of 'energy_app' container also runs the 'load_db_fixtures.py' script which fills the 'country' and 'country_neighbours' tables with data from the 'database/fixtures/countries.json' file.
 
 
 Assure that the database fixtures are imported by running the following command (in some platforms there might be issues with the entrypoint):
@@ -117,10 +121,8 @@ If you prefer using your local python interpreter (instead of docker), you'll ne
 
 ### How to run:
 
-> **_NOTE 1:_**  The following instructions assume that the database is already initialized
-and the database migrations are already applied. If not, please refer to the [Initial setup](#initial-setup) section.
-
-> **_NOTE 2:_**  The commands below assume that you are running them from the root directory of the project (`energy_app/`)
+> [!WARNING]
+> The following instructions assume that the database is already initialized and the database migrations are already applied. If not, please refer to the [Initial setup](#initial-setup) section.
 
 #### Data acquisition tasks:
 
@@ -144,7 +146,8 @@ This will trigger the entire process of data ETL. Namely:
   2. Data manipulation and transformation (e.g., aggregate data by control area for NTC forecasts)
   3. Data load to the central database (PostgreSQL)
 
-> **_IMPORTANT:_** We recommend you run the data acquisition pipeline with a 
+> [!IMPORTANT] 
+> We recommend you run the data acquisition pipeline with a 
 > lookback period to minimize the amount of missing historical data. 
 > For example, to run the data acquisition pipeline for the last 30 days, run the following command:
 > ```shell
@@ -231,7 +234,8 @@ Alternatively, the database can be backed up to CSV. To run the backup script, e
    $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup table
 ```
 
-> **_NOTE:_** There are multiple backup options. You can check the available options via:
+> [!IMPORTANT]
+> There are multiple backup options. You can check the available options via:
 > ```shell
 >  $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup --help
 > ```
