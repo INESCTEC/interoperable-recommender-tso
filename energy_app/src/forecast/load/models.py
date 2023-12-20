@@ -83,7 +83,7 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     logger.debug(f"{log_msg_} ... Ok!")
 
     # Readjust variables (remove incomplete inputs for forecast range)
-    valid_predictors = dclass.inputs.loc[forecast_range,].dropna(axis=1).columns  # noqa
+    valid_predictors = dclass.inputs.loc[forecast_range,].dropna(thresh=4, axis=1).columns  # noqa
     missing_cols = [x for x in X_train.columns if x not in valid_predictors]
     if len(missing_cols) > 0:
         logger.warning(f"[LoadForecast:{country_code}] Inputs {missing_cols} "
