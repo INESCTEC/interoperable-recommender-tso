@@ -42,6 +42,7 @@ from src.forecast.util.data_util import assure_transmission_dt_index
 from src.forecast.generation.conventional import calculate_cg_generation
 from src.convolution import risk_reserve
 from src.util.save import save_countries_data, save_risk_outputs, save_coordinated_risk  # noqa
+from src.entsoe_api_client.control_area_map import CA_MAP
 from src.util.validate import dataset_validator
 import src.risk_coordination as risk_coordination
 from src.energy_app_client import Controller
@@ -82,6 +83,18 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         continue
 
     try:
+        # Set active neighbors for this country based on:
+        # 1. DB Fixtures (country_info.json)
+        # 2. Control Area Mappings (control_area_map.py)
+        ca_to_country = lambda x: x.split("_")[0] if len(x.split("_")) > 1 else x
+
+        # Recode CA codes to country codes
+        country_ca_map = CA_MAP[country_code]
+        country_neighbours = tuple(country_info["neighbours"])
+        expected_neighbours_ca = [x[1] for x in country_ca_map if x[3] == True]
+        expected_neighbours_ca = [x for x in expected_neighbours_ca if x.startswith(country_neighbours)]  # noqa
+        expected_neighbours = sorted(set(map(ca_to_country, expected_neighbours_ca)))  # noqa
+
         # Get country timezone (used to improve load forecasts)
         country_tz = country_info["timezone"]
         forec_start_dt = pd.Timestamp(end_dt.date() - pd.DateOffset(days=365),
@@ -129,11 +142,11 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         # Query SCE (export) for this country:
         sce_export = get_sce_export(db.engine,
                                     from_country_code=country_code,
-                                    start_date=forec_start_dt,
+                                    start_date=launch_time,
                                     end_date=end_dt)
         sce_export = sce_export.tz_convert(country_tz)
         sce_export = assure_transmission_dt_index(
-            country_info=COUNTRY_DETAILS,
+            country_neighbours=expected_neighbours,
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=sce_export,
@@ -146,12 +159,12 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         # Query SCE (import) for this country:
         sce_import = get_sce_import(db.engine,
                                     to_country_code=country_code,
-                                    start_date=forec_start_dt,
+                                    start_date=launch_time,
                                     end_date=end_dt)
 
         sce_import = sce_import.tz_convert(country_tz)
         sce_import = assure_transmission_dt_index(
-            country_info=COUNTRY_DETAILS,
+            country_neighbours=expected_neighbours,
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=sce_import,
@@ -163,11 +176,11 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         # Query NTC (export) for this country:
         ntc_export = get_ntc_export(db.engine,
                                     from_country_code=country_code,
-                                    start_date=forec_start_dt,
+                                    start_date=launch_time,
                                     end_date=end_dt)
         ntc_export = ntc_export.tz_convert(country_tz)
         ntc_export = assure_transmission_dt_index(
-            country_info=COUNTRY_DETAILS,
+            country_neighbours=expected_neighbours,
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=ntc_export,
@@ -179,12 +192,12 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         # Query NTC (import) for this country:
         ntc_import = get_ntc_import(db.engine,
                                     to_country_code=country_code,
-                                    start_date=forec_start_dt,
+                                    start_date=launch_time,
                                     end_date=end_dt)
 
         ntc_import = ntc_import.tz_convert(country_tz)
         ntc_import = assure_transmission_dt_index(
-            country_info=COUNTRY_DETAILS,
+            country_neighbours=expected_neighbours,
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=ntc_import,
@@ -221,9 +234,9 @@ for country_code, country_info in COUNTRY_DETAILS.items():
         # -- Verify if SCE for all areas are available
         validator = dataset_validator(
             expected_dates=timestamp,
-            country_code=country_code,
             sce_import=sce_import,
-            sce_export=sce_export
+            sce_export=sce_export,
+            country_neighbours=expected_neighbours,
         )
     except Exception:
         logger.exception(f"[Forecast:{country_code}] Unexpected error. "

@@ -76,6 +76,7 @@ def get_sce_export(db_engine, from_country_code, start_date, end_date):
         dataset.index.name = "timestamp_utc"
         dataset.index = dataset.index.tz_localize("UTC")
     else:
+        dataset.set_index("timestamp_utc", inplace=True)
         dataset.index.name = "timestamp_utc"
     return dataset
 
@@ -93,6 +94,7 @@ def get_sce_import(db_engine, to_country_code, start_date, end_date):
         dataset.index.name = "timestamp_utc"
         dataset.index = dataset.index.tz_localize("UTC")
     else:
+        dataset.set_index("timestamp_utc", inplace=True)
         dataset.index.name = "timestamp_utc"
     return dataset
 
@@ -110,6 +112,7 @@ def get_ntc_export(db_engine, from_country_code, start_date, end_date):
         dataset.index.name = "timestamp_utc"
         dataset.index = dataset.index.tz_localize("UTC")
     else:
+        dataset.set_index("timestamp_utc", inplace=True)
         dataset.index.name = "timestamp_utc"
     return dataset
 
@@ -127,6 +130,7 @@ def get_ntc_import(db_engine, to_country_code, start_date, end_date):
         dataset.index.name = "timestamp_utc"
         dataset.index = dataset.index.tz_localize("UTC")
     else:
+        dataset.set_index("timestamp_utc", inplace=True)
         dataset.index.name = "timestamp_utc"
     return dataset
 
