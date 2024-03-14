@@ -22,10 +22,11 @@ import datetime as dt
 
 import pandas as pd
 from collections import defaultdict
-from dotenv import load_dotenv
 from loguru import logger
 
-load_dotenv(".env")
+# -- Uncomment for debug:
+# from dotenv import load_dotenv
+# load_dotenv(".env")
 
 from conf import load_cli_args_acquisition, settings
 from database import PostgresDB
@@ -73,7 +74,8 @@ log_msg_ = f"Requesting ENTSOE data ..."
 logger.info(log_msg_)
 countries_dataset = get_entsoe_dataset(country_details=COUNTRY_DETAILS,
                                        start_date=start_dt,
-                                       end_date=end_dt)
+                                       end_date=end_dt,
+                                       launch_time=launch_time)
 logger.info(f"{log_msg_} ... Ok! ({time() - t0:.2f})")
 
 ###################

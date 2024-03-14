@@ -51,9 +51,10 @@ def save_coordinated_risk(outputs_dir, countries_details,
         coordinated_risk = coordinated_risk.copy()
         next_day = launch_time.date() + dt.timedelta(days=1)
         next_day = next_day.strftime("%Y-%m-%d")
+        launch_time = launch_time.strftime("%Y%m%d%H%M%S")
 
         file_dir = f"{outputs_dir}/coordinated_risk/"
-        file_path = os.path.join(file_dir, f"{next_day}.csv")
+        file_path = os.path.join(file_dir, f"{next_day}_{launch_time}.csv")
         os.makedirs(file_dir, exist_ok=True)
 
         logger.debug(f"[SaveCoordRisk] Output file: {file_path}")

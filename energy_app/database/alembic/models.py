@@ -125,3 +125,14 @@ t_report = Table(
     UniqueConstraint('country_code', 'table_entsoe', 'day')
 )
 
+output_report = Table(
+    'output_report', metadata,
+    Column('country_code', ForeignKey('country.code'), nullable=False),
+    Column('target_day', Date, nullable=False),
+    Column('valid_hours', Integer, nullable=False),
+    Column('null_hours', Integer, nullable=False),
+    Column('status', Text, nullable=False),
+    Column('updated_at', DateTime, nullable=False),
+    UniqueConstraint('country_code', 'target_day')
+)
+

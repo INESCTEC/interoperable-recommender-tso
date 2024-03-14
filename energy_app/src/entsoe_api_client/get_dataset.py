@@ -12,30 +12,30 @@ from database import PostgresDB
 from .helpers import request_ntc_forecasts, request_sce_day_ahead
 
 
-def get_entsoe_data_3_retries(table_, client, country_code, start_date, end_date, neighbour="") -> pd.DataFrame:
+def get_entsoe_data_3_retries(table, client, country_code, start_date,
+                              end_date, launch_time, neighbour="") -> pd.DataFrame:
     retries = 0
     while retries < 3:
         try:
-            if table_ == "load_forecast":
+            if table == "load_forecast":
                 df = client.query_load_forecast(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            elif table_ == "load_actual":
+            elif table == "load_actual":
                 df = client.query_load(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            elif table_ == "generation":
+            elif table == "generation":
                 df = client.query_generation(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            elif table_ == "res_generation_forecast":
+            elif table == "res_generation_forecast":
                 df = client.query_wind_and_solar_forecast(country_code, start=start_date, end=end_date, psr_type=None).tz_convert("UTC")
-            elif table_ == "generation_forecast":
+            elif table == "generation_forecast":
                 df = client.query_generation_forecast(country_code, start=start_date, end=end_date).tz_convert("UTC")
-            elif table_ == "scheduled_exchanges":
-                # Requests by country / control area:
-                # df = client.query_scheduled_exchanges(country_code, neighbour, start=start_date, end=end_date, dayahead=True).tz_convert("UTC")
+            elif table == "scheduled_exchanges":
                 # Requests by control area:
                 df = request_sce_day_ahead(entsoe_client=client,
                                            from_country_code=country_code,
                                            to_country_code=neighbour,
                                            start_date=start_date,
-                                           end_date=end_date)
-            elif table_ == "net_transfer_capacity":
+                                           end_date=end_date,
+                                           launch_time=launch_time)
+            elif table == "net_transfer_capacity":
                 df = request_ntc_forecasts(client, country_code, start_date, end_date)
             else:
                 raise ValueError()
@@ -44,7 +44,7 @@ def get_entsoe_data_3_retries(table_, client, country_code, start_date, end_date
             raise
         except Exception as e:
             retries += 1
-            logger.critical(f"Retries={retries}. Error {table_} for {country_code}. Exception type: {type(e).__name__}")
+            logger.critical(f"Retries={retries}. Error {table} for {country_code}. Exception type: {type(e).__name__}")
             if retries == 3:
                 raise e
             time.sleep(2)
@@ -53,6 +53,7 @@ def get_entsoe_data_3_retries(table_, client, country_code, start_date, end_date
 def get_entsoe_dataset(country_details: dict,
                        start_date: dt.date,
                        end_date: dt.date,
+                       launch_time: dt.datetime,
                        freq='H') -> dict:
     """
     Get dataset from entsoe for the given countries and time period.
@@ -81,9 +82,15 @@ def get_entsoe_dataset(country_details: dict,
             log_msg_ = "Requesting load consumption forecast ..."
             logger.debug(f"{log_msg_}")
             try:
-                load_forecast = get_entsoe_data_3_retries("load_forecast", client, country_code, start_date, end_date)
-
-                load_forecast.rename(columns={"Forecasted Load": "load_forecast",}, inplace=True)
+                load_forecast = get_entsoe_data_3_retries(
+                    table="load_forecast",
+                    client=client,
+                    country_code=country_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    launch_time=launch_time)
+                load_forecast.rename(columns={"Forecasted Load": "load_forecast",},
+                                     inplace=True)
                 logger.debug(f"{log_msg_} Ok!\n")
             except NoMatchingDataError:
                 load_forecast = pd.DataFrame(index=country_dataset.index)
@@ -92,8 +99,15 @@ def get_entsoe_dataset(country_details: dict,
             log_msg_ = "Requesting load consumption actual ..."
             logger.debug(f"{log_msg_}")
             try:
-                load_actual = get_entsoe_data_3_retries("load_actual", client, country_code, start_date, end_date)
-                load_actual.rename(columns={"Actual Load": "load_actual"}, inplace=True)
+                load_actual = get_entsoe_data_3_retries(
+                    table="load_actual",
+                    client=client,
+                    country_code=country_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    launch_time=launch_time)
+                load_actual.rename(columns={"Actual Load": "load_actual"},
+                                   inplace=True)
                 logger.debug(f"{log_msg_} Ok!\n")
             except NoMatchingDataError:
                 load_actual = pd.DataFrame(index=country_dataset.index)
@@ -102,7 +116,13 @@ def get_entsoe_dataset(country_details: dict,
             log_msg_ = "Requesting actual generation ..."
             logger.debug(f"{log_msg_}")
             try:
-                generation = get_entsoe_data_3_retries("generation", client, country_code, start_date, end_date)
+                generation = get_entsoe_data_3_retries(
+                    table="generation",
+                    client=client,
+                    country_code=country_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    launch_time=launch_time)
                 logger.debug(f"{log_msg_} Ok!\n")
             except NoMatchingDataError:
                 generation = pd.DataFrame(index=country_dataset.index)
@@ -127,7 +147,13 @@ def get_entsoe_dataset(country_details: dict,
             log_msg_ = "Requesting RES generation forecasts data ..."
             logger.debug(f"{log_msg_}")
             try:
-                res_generation_forecast = get_entsoe_data_3_retries("res_generation_forecast", client, country_code, start_date, end_date)
+                res_generation_forecast = get_entsoe_data_3_retries(
+                    table="res_generation_forecast",
+                    client=client,
+                    country_code=country_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    launch_time=launch_time)
                 res_generation_forecast["res_generation_forecast"] = res_generation_forecast.sum(axis=1)
                 logger.debug(f"{log_msg_} Ok!\n")
             except NoMatchingDataError:
@@ -137,7 +163,13 @@ def get_entsoe_dataset(country_details: dict,
             log_msg_ = "Requesting total generation (and pump storage consumption) forecasts data ..."
             logger.debug(f"{log_msg_}")
             try:
-                generation_forecast = get_entsoe_data_3_retries("generation_forecast", client, country_code, start_date, end_date)
+                generation_forecast = get_entsoe_data_3_retries(
+                    table="generation_forecast",
+                    client=client,
+                    country_code=country_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    launch_time=launch_time)
                 pump_load_forecast = pd.DataFrame(index=generation_forecast.index)
                 logger.debug(f"{log_msg_} Ok!\n")
             except NoMatchingDataError:
@@ -199,8 +231,14 @@ def get_entsoe_dataset(country_details: dict,
                 try:
                     log_msg_2_ = f"Downloading SCE ({country_code} -- {neighbour})"
                     logger.debug(f"{log_msg_2_}")
-                    scheduled_exchanges = get_entsoe_data_3_retries("scheduled_exchanges", client, country_code,
-                                                                    start_date, end_date, neighbour)
+                    scheduled_exchanges = get_entsoe_data_3_retries(
+                        table="scheduled_exchanges",
+                        client=client,
+                        country_code=country_code,
+                        start_date=start_date,
+                        end_date=end_date,
+                        launch_time=launch_time,
+                        neighbour=neighbour)
 
                     if isinstance(scheduled_exchanges, pd.Series):
                         scheduled_exchanges = scheduled_exchanges.to_frame()
@@ -222,7 +260,13 @@ def get_entsoe_dataset(country_details: dict,
             if len(country_code_neighbours) > 0:
                 log_msg_ = "Requesting NTC ..."
                 logger.debug(f"{log_msg_}")
-                net_transfer_capacity = get_entsoe_data_3_retries("net_transfer_capacity", client, country_code, start_date, end_date)
+                net_transfer_capacity = get_entsoe_data_3_retries(
+                    table="net_transfer_capacity",
+                    client=client,
+                    country_code=country_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    launch_time=launch_time)
                 # join
                 net_transfer_capacity.columns = [f"NTC_{x}" for x in net_transfer_capacity.columns]
                 country_dataset = country_dataset.join(net_transfer_capacity)

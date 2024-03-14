@@ -12,7 +12,9 @@ BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # General Configs:
 N_JOBS = int(os.environ.get('N_JOBS', 1))
 ENTSOE_API_KEY = os.environ.get('ENTSOE_API_KEY', default='')
-POST_TO_ENERGY_APP = True if int(os.environ.get("POST_TO_ENERGY_APP", default=0)) == 1 else False
+POST_TO_ENERGY_APP = int(os.environ.get("POST_TO_ENERGY_APP", default=0)) == 1
+POST_ONLY_ON_UPDATES = int(os.environ.get("POST_ONLY_ON_UPDATES", default=0)) == 1  # noqa
+
 LOCAL_TZ = "Europe/Lisbon"
 BACKUPS_PATH = os.path.join(BASE_PATH, "files", "backup")
 

@@ -1,5 +1,6 @@
 # General configs:
 POST_TO_ENERGY_APP=1
+POST_ONLY_ON_UPDATES=1
 
 # Entsoe configs:
 ENTSOE_API_KEY=insert_api_key_here

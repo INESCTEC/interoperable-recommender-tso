@@ -19,14 +19,14 @@ import os
 import json
 import numpy as np
 import pandas as pd
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
+import datetime as dt
 
 from time import time
 from loguru import logger
-from dotenv import load_dotenv
-load_dotenv(".env")
+
+# -- Uncomment for debug:
+# from dotenv import load_dotenv
+# load_dotenv(".env")
 
 from conf import load_cli_args, settings
 from database import PostgresDB
@@ -43,7 +43,7 @@ from src.forecast.generation.conventional import calculate_cg_generation
 from src.convolution import risk_reserve
 from src.util.save import save_countries_data, save_risk_outputs, save_coordinated_risk  # noqa
 from src.entsoe_api_client.control_area_map import CA_MAP
-from src.util.validate import dataset_validator
+from src.util.validate import dataset_validator, verify_recommendation_updates
 import src.risk_coordination as risk_coordination
 from src.energy_app_client import Controller
 
@@ -52,6 +52,7 @@ from src.energy_app_client import Controller
 launch_time, output_dir = load_cli_args()
 launch_time = pd.Timestamp(launch_time, tz='UTC')
 launch_date = launch_time.date()
+next_day = launch_time.date() + dt.timedelta(days=1)
 logger.info("-" * 79)
 logger.info(f"Launch time (UTC): {launch_time}")
 
@@ -150,7 +151,8 @@ for country_code, country_info in COUNTRY_DETAILS.items():
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=sce_export,
-            direction="export"
+            direction="export",
+            fillna=False
         )
 
         logger.info(f"[Forecast:{country_code}] SCE export:")
@@ -168,7 +170,8 @@ for country_code, country_info in COUNTRY_DETAILS.items():
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=sce_import,
-            direction="import"
+            direction="import",
+            fillna=False
         )
         logger.info(f"[Forecast:{country_code}] SCE import:")
         logger.info("\n" + sce_import.head(2).to_string())
@@ -184,7 +187,8 @@ for country_code, country_info in COUNTRY_DETAILS.items():
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=ntc_export,
-            direction="export"
+            direction="export",
+            fillna=True
         )
         logger.info(f"[Forecast:{country_code}] NTC export:")
         logger.info("\n" + ntc_export.head(2).to_string())
@@ -201,7 +205,8 @@ for country_code, country_info in COUNTRY_DETAILS.items():
             country_code=country_code,
             expected_dates=cg_forecasts.index,
             df=ntc_import,
-            direction="import"
+            direction="import",
+            fillna=True
         )
         logger.info(f"[Forecast:{country_code}] NTC import:")
         logger.info("\n" + ntc_import.head(2).to_string())
@@ -397,6 +402,18 @@ for country_code in list(coordinated_risks.index):
     with open(file_path, "w") as f:
         json.dump(coordinated_action, f, indent=4)
 
+################################################################
+# Check for recommendation updates (compared to previous runs) #
+################################################################
+if settings.POST_ONLY_ON_UPDATES:
+    updated_countries = verify_recommendation_updates(
+        engine=db.engine,
+        actions=coordinated_actions,
+        launch_time=launch_time,
+        target_day=next_day)
+else:
+    updated_countries = list(COUNTRY_DETAILS.keys())
+
 ######################################
 # POST to EnergyAPP REST API Backend #
 ######################################
@@ -406,6 +423,12 @@ if settings.POST_TO_ENERGY_APP:
     controller.set_access_token(token=settings.ENERGYAPP["apikey"])
     for country_actions in coordinated_actions:
         # Post country actions to energy app
+        code_ = country_actions["metadata"]["country_code"]
+        if code_ not in updated_countries:
+            logger.warning(f"[EnergyApp:{code_}] Skipping post to energy app "
+                           f"because there are no updates for this country.")
+            continue
+
         try:
             response = controller.post_actions_data(payload=country_actions)
         except Exception:
