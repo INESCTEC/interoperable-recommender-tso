@@ -98,7 +98,10 @@ def request_ntc_forecasts(entsoe_client, country_code, start_date, end_date):
     return country_ntc_df
 
 
-def request_sce_day_ahead(entsoe_client, from_country_code, to_country_code, start_date, end_date):
+def request_sce_day_ahead(entsoe_client,
+                          from_country_code, to_country_code,
+                          start_date, end_date,
+                          launch_time):
     # Base structs:
     country_ca_map = CA_MAP[from_country_code]
     ca_neighbour_map = [x for x in country_ca_map if x[1].startswith(to_country_code) and x[3] == True]
@@ -125,12 +128,28 @@ def request_sce_day_ahead(entsoe_client, from_country_code, to_country_code, sta
             sce = sce.tz_convert("utc")
             logger.debug(f"Downloading SCE data ({country_ca} -- {neighbour_ca}) ... Ok!")
         except NoMatchingDataError:
-            log_msg_ = f"No SCE data for " \
-                       f"{country_ca}-{neighbour_ca}. " \
-                       f"Skipping ..."
-            logger.error(log_msg_)
-            sce = pd.Series(index=expected_idx, data=pd.NA)
-            logger.debug(f"Downloading SCE data ({country_ca} -- {neighbour_ca}) ... Failed!")
+            try:
+                # attempt to get "total SCE" only for next day
+                # this can only be done for day ahead timespan, otherwise
+                # it might compromise the historical data already present
+                # in the database
+                sce = entsoe_client.query_scheduled_exchanges(
+                    country_code_from=country_ca,
+                    country_code_to=neighbour_ca,
+                    start=launch_time,
+                    end=end_date,
+                    dayahead=False)
+                sce = sce.resample("H").mean()
+                sce = sce.tz_convert("utc")
+                logger.debug(f"Downloading SCE data ({country_ca} -- {neighbour_ca}) ... Ok!")
+
+            except NoMatchingDataError:
+                log_msg_ = f"No SCE data for " \
+                           f"{country_ca}-{neighbour_ca}. " \
+                           f"Skipping ..."
+                logger.error(log_msg_)
+                sce = pd.Series(index=expected_idx, data=pd.NA)
+                logger.debug(f"Downloading SCE data ({country_ca} -- {neighbour_ca}) ... Failed!")
 
         # There might be cases there are multiple SCE for a give country
         # code (i.e., originate from different control areas)

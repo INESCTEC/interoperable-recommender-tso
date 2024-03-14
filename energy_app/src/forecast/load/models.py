@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from loguru import logger
@@ -6,6 +7,7 @@ from forecast_api.models import QuantileReg
 
 from .configs import LQRConfig
 from src.forecast.util.extreme_quantiles import exponential_MLE
+from src.forecast.util.data_util import mad_outlier_detection
 
 
 def linear_quantile_regression(dataset: pd.DataFrame,
@@ -71,6 +73,18 @@ def linear_quantile_regression(dataset: pd.DataFrame,
     )
     logger.debug(f"{log_msg_} ... Ok!")
 
+    # Actual values often have outliers (ENTSO-E raw data)
+    # This MAD-based outlier detection finds and removes target outliers:
+    y_train_outliers = mad_outlier_detection(data=y_train, threshold=3.7)
+    y_train_zeros = np.where(y_train == 0)[0]
+    idx_to_remove = np.union1d(y_train_outliers, y_train_zeros)
+
+    if len(idx_to_remove) > 0:
+        logger.warning(f"[LoadForecast:{country_code}] Removed outliers "
+                       f"for {len(idx_to_remove)} samples")
+        X_train = X_train.drop(X_train.index[idx_to_remove])
+        y_train = y_train.drop(y_train.index[idx_to_remove])
+
     log_msg_ = f"[LoadForecast:{country_code}]] Operational X/y split ..."
     logger.debug(log_msg_)
     # -- Forecast: # todo: remove y_test
@@ -91,6 +105,11 @@ def linear_quantile_regression(dataset: pd.DataFrame,
                        f"Unable to use as predictors.")
         X_train = X_train[valid_predictors]
         X_test = X_test[valid_predictors]
+
+    if "load_forecast" not in missing_cols:
+        if "load_actual_-1_week" in X_train.columns:
+            X_train = X_train.drop("load_actual_-1_week", axis=1)
+            X_test = X_test.drop("load_actual_-1_week", axis=1)
 
     log_msg_ = f"[LoadForecast:{country_code}]] DropNA + Normalization ..."
     logger.debug(log_msg_)

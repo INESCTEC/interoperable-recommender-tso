@@ -39,7 +39,10 @@ def calculate_cg_generation(dataset: pd.DataFrame,
     # missing values arise
     logger.debug(f"[CgForecast:{country_code}]] Calculating CG forecast ...")
     forecasts = forecasts.join(dataset[["generation_forecast", "res_generation_forecast"]], how="left")
-    forecasts["cg_generation_forecast"] = forecasts["generation_forecast"] - forecasts["res_generation_forecast"]
+    if country_code == 'IT':
+        forecasts["cg_generation_forecast"] = forecasts["generation_forecast"]
+    else:
+        forecasts["cg_generation_forecast"] = forecasts["generation_forecast"] - forecasts["res_generation_forecast"]
     logger.debug(f"[CgForecast:{country_code}]] In process ... Complete!")
 
     return forecasts[["cg_generation_forecast"]]

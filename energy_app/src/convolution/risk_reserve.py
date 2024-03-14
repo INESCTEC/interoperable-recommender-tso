@@ -57,10 +57,9 @@ def calculate_risk(countries_qt_forecast):
         conventional_gen = country_forecasts['generation']['conventional']['cg_generation_forecast'].to_list()
         pumped_consumption = country_forecasts['load']['pump']['pump_load_forecast'].to_list()
         sce_export = country_forecasts['sce']['export'].copy()
-        mininum_data = sce_export.groupby(sce_export.index).count()['from_country_code'][0]  # expected data points
-        sce_export = sce_export.groupby(sce_export.index)['value'].sum(min_count=mininum_data).to_list()
+        sce_export = sce_export.groupby(sce_export.index)['value'].sum().to_list()
         sce_import = country_forecasts['sce']['import'].copy()
-        sce_import = sce_import.groupby(sce_import.index)['value'].sum(min_count=mininum_data).to_list()
+        sce_import = sce_import.groupby(sce_import.index)['value'].sum().to_list()
         # shift system margin curve
         for hour in range(0, country_forecasts['load']['total'].shape[0]):
             # check if all interconnections are available
@@ -100,7 +99,7 @@ def calculate_risk(countries_qt_forecast):
 
         reserves = reserve_level(
             country_code,
-            system_margin.SM_list,
+            system_margin.SM_list, 
             index_name_up='LOLP', 
             index_value_up=settings.RISK_THRESHOLD,
             index_name_down='PWRE', 
@@ -363,7 +362,7 @@ def reserve_level(
             reserve_needs_up = np.hstack((reserve_needs_up, 0.0))
             log_msg_ = f"[RiskReserve:{country_code}][Hour:{i}]: Failed Reserve Up Calculation ..."
             logger.error(log_msg_)
-
+        
         try:
             ord = index_down.ravel().argsort()  # order the arrays
             func_down = scipy.interpolate.interp1d(index_down[ord], Reserve_down[ord])  # interpolation of the relation
@@ -426,8 +425,8 @@ def get_risk_evaluation(country_code, country_forecasts, reserves, system_margin
 
             # add debug information
             country_risk[timestep]['debug'] = {
-                'system_margin_x': None,
-                'system_margin_y': None,
+                # 'system_margin_x': None,
+                # 'system_margin_y': None,
                 'reserve_curve_up_x': None,
                 'reserve_curve_up_y': None,
                 'reserve_needs_up': reserve_needs_up,
@@ -490,8 +489,8 @@ def get_risk_evaluation(country_code, country_forecasts, reserves, system_margin
         # todo: temporary fix (use same reference as upward reserve)
         #  exception for PT and ES
         #  remove to revert to previous logic
-        if country_code not in ['ES', 'PT']:
-            largest_pump_unit = largest_unit_country
+        # if country_code not in ['ES', 'PT']:
+        largest_pump_unit = largest_unit_country
         # --
         drr_down_secondary = np.sqrt(coeff_a * country_forecasts['load']['total']['q50'].max() + coeff_b ** 2) - coeff_b
         drr_down_tertiary = largest_pump_unit + gen_drr + load_drr
@@ -504,20 +503,20 @@ def get_risk_evaluation(country_code, country_forecasts, reserves, system_margin
         # Else, increase consumption is indicated:
         else:
             evaluation_risk_down = 'increase'
-            drr_minus_reserve_down = drr_down_country - reserve_needs_up
-            # Level #1 - upper 0 to 20% of drr_up_country - reserve_needs_up
+            drr_minus_reserve_down = drr_down_country - reserve_needs_down
+            # Level #1 - upper 0 to 20% of drr_down_country - reserve_needs_down
             if np.abs(drr_minus_reserve_down) <= 0.2 * largest_pump_unit:
                 risk_level_down = 1
 
-            # Level #2 - upper 20% to 40% of drr_up_country - reserve_needs_up
+            # Level #2 - upper 20% to 40% of drr_down_country - reserve_needs_down
             elif 0.2 * largest_pump_unit < np.abs(drr_minus_reserve_down) <= 0.4 * largest_pump_unit:
                 risk_level_down = 2
 
-            # Level #3 - upper 40% to 80% of drr_up_country - reserve_needs_up
+            # Level #3 - upper 40% to 80% of drr_down_country - reserve_needs_down
             elif 0.4 * largest_pump_unit < np.abs(drr_minus_reserve_down) <= 0.8 * largest_pump_unit:
                 risk_level_down = 3
 
-            # Level #4 - upper 80% to drr_up_country - reserve_needs_up
+            # Level #4 - upper 80% to drr_down_country - reserve_needs_down
             elif np.abs(drr_minus_reserve_down) > 0.8 * largest_pump_unit:
                 risk_level_down = 4
             # Else, no risk level is indicated
@@ -541,8 +540,8 @@ def get_risk_evaluation(country_code, country_forecasts, reserves, system_margin
 
         # add debug information
         country_risk[timestep]['debug'] = {
-            'system_margin_x': system_margin.SM_list[timestep].x.tolist(),
-            'system_margin_y': system_margin.SM_list[timestep].px.tolist(),
+            # 'system_margin_x': system_margin.SM_list[timestep].x.tolist(),
+            # 'system_margin_y': system_margin.SM_list[timestep].px.tolist(),
             'reserve_curve_up_x': reserves['reserves_tested_up'][timestep].tolist(),
             'reserve_curve_up_y': reserves['discrete_risk_curves_up'][timestep].tolist(),
             'reserve_needs_up': reserve_needs_up,
