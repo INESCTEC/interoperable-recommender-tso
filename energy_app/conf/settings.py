@@ -20,9 +20,9 @@ BACKUPS_PATH = os.path.join(BASE_PATH, "files", "backup")
 
 # Database configs:
 DATABASE = {
-    'name': os.environ.get("POSTGRES_NAME", default='master'),
-    'user': os.environ.get("POSTGRES_USER", default=''),
-    'password': os.environ.get("POSTGRES_PASSWORD", default=''),
+    'name': os.environ.get("POSTGRES_DB", default='master'),
+    'user': os.environ.get("POSTGRES_USER", default='postgres'),
+    'password': os.environ.get("POSTGRES_PASSWORD", default='postgres'),
     'host': os.environ.get("POSTGRES_HOST", default='postgresql'),
     'port': int(os.environ.get("POSTGRES_PORT", default=5432)),
 }
@@ -33,7 +33,7 @@ DATABASE_URL = f"postgresql://{DATABASE['user']}:{DATABASE['password']}@" \
 # ENERGYAPP CLIENT Configs:
 ENERGYAPP = {
     'host': os.environ.get("ENERGYAPP_HOST", default=''),
-    'port': int(os.environ.get("ENERGYAPP_PORT", default=5432)),
+    'port': int(os.environ.get("ENERGYAPP_PORT", default=443)),
     'n_retries': int(os.environ.get("ENERGYAPP_N_RETRIES", default=3)),
     'basepath': os.environ.get("ENERGYAPP_BASEPATH", default='/energy-app/api/v2'),
     'apikey': os.environ.get('ENERGYAPP_APIKEY', default='')

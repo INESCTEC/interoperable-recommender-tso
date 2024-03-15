@@ -39,5 +39,5 @@ neighbours_df["updated_at"] = dt.datetime.utcnow()
 
 # Connect to DB and insert data:
 db = PostgresDB.instance(**settings.DATABASE)
-db.upload_to_db(country_df, 'country', ['code'])
-db.upload_to_db(neighbours_df, 'country_neighbours', ['country_code'])
+db.upsert_to_db(country_df, 'country')
+db.upsert_to_db(neighbours_df, 'country_neighbours')

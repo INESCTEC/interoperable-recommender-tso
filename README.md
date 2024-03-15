@@ -72,7 +72,7 @@ The `dotenv` file provides a template for all the environment variables needed b
 To configure the environment variables, copy the `dotenv` file to `.env` and fill in the values for each variable.
 
 ```shell
-   $ cp dotenv .env
+cp dotenv .env
 ```
 > [!NOTE]
 >  In windows, just copy-paste the `dotenv` file and rename it to `.env`.
@@ -83,9 +83,9 @@ The following environment variables are required.
 | variable   | Type | description            |
 |:-----------|:-----|:-----------------------|
 | POSTGRES_HOST         | String  | Recommender Database Host. Defaults to 'postgresql', which will work if you deploy the recommender in the same server as its database (see `docker-compose.yml` file) |
-| POSTGRES_NAME         | String  | Recommender Database name. Defaults to `master`  |
-| POSTGRES_USER         | String  | Recommender Database Username. Defaults to `''`. |
-| POSTGRES_PASSWORD     | String  | Recommender Database Password. Defaults to `''`.  |
+| POSTGRES_DB         | String  | Recommender Database name. Defaults to `master`  |
+| POSTGRES_USER         | String  | Recommender Database Username. Defaults to `postgres`. |
+| POSTGRES_PASSWORD     | String  | Recommender Database Password. Defaults to `postgres`.  |
 | POSTGRES_PORT         | Integer | Recommender Database Port. Defaults to `5432` |
 | ENTSOE_API_KEY        | String  | ENTSO-E TP `API KEY` used for data retrieval. See the official  [ENTSO-E Transparency Platform RESTful API documentation](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html) for more information. |
 
@@ -109,40 +109,44 @@ Optional environment variables can be configured to send recommendations to the 
 To launch the docker containers stack:
 
 ```shell
-   $ docker compose up -d
+docker compose up -d
 ```
 
 > [!IMPORTANT]
 > This will launch the database container and the 'energy_app' container. Note that both database schema will be initialized and the database migrations will be applied.
 
-> [!IMPORTANT]
-> The entrypoint (file `entrypoint.sh`) of 'energy_app' container also runs the 'load_db_fixtures.py' script which fills the 'country' and 'country_neighbours' tables with data from the 'database/fixtures/countries.json' file.
+
+Then, import the table schema to the database (set in the environment variables).
+
+```shell
+docker compose run --rm energy_app alembic upgrade head
+```
 
 
 Assure that the database fixtures are imported by running the following command (in some platforms there might be issues with the entrypoint):
 
 ```shell
-   $ docker compose run --rm energy_app python load_db_fixtures.py
+docker compose run --rm energy_app python load_db_fixtures.py
 ```
 
 ### With Local Python Interpreter:
 
-If you prefer using your local python interpreter (instead of docker), you'll need to manually perform the installation steps. Meaning:
+If you prefer using your local python interpreter (instead of Docker), you'll need to manually perform the installation steps. Meaning:
 1. Install the python dependencies
    ```shell
-        $ pip install -r requirements.txt
-     ```
+   pip install -r requirements.txt
+   ```
 2. Start the database container
-    ```shell
-        $ docker compose up -d postgresql
-    ```
+   ```shell
+   docker compose up -d postgresql
+   ```
 3. Apply the database migrations
     ```shell
-        $ alembic upgrade head
+    alembic upgrade head
     ```
 4. Run the 'load_db_fixtures.py' script to init the database with its fixtures
     ```shell
-        $ python load_db_fixtures.py
+    python load_db_fixtures.py
     ```
 
 
@@ -156,7 +160,7 @@ The following execution will retrieve data from multiple system variables (and e
 
 
 ```shell
-   $ docker compose run --rm energy_app python main_data_acquisition.py  --lookback_days=180
+docker compose run --rm energy_app python main_data_acquisition.py --lookback_days=180
 ```
 
 > [!WARNING]
@@ -168,6 +172,17 @@ The following execution will retrieve data from multiple system variables (and e
 > [!WARNING]
 > The following instructions assume that the database is already initialized and the database migrations are already applied. If not, please refer to the [Initial setup](#initial-setup) section.
 
+
+#### Scheduled Tasks
+
+The `Interoperable Recommender` has two main types of scheduled tasks. 
+
+1. Data acquistion task: Retrieve TSO adta from ENTSO-E TP platform
+2. Recommender execution task: Create national level recommendations (recommendations output stored in `energy_app/files/operational`)
+
+If you're using a Linux server, you can quickly import the scheduled tasks by updating your `crontab` with the information available on the directory `cron/project_crontab` of this project.
+
+
 #### Data acquisition tasks:
 
 To launch the data acquisition pipeline, execute the `main_data_acquisition.py` script from the `energy_app` container:
@@ -175,13 +190,13 @@ To launch the data acquisition pipeline, execute the `main_data_acquisition.py` 
 ***With Docker:***
 
 ```shell
-   $ docker compose run --rm energy_app python main_data_acquisition.py
+docker compose run --rm energy_app python main_data_acquisition.py
 ```
 
 ***With Local Python interpreter:***
 
 ```shell
-   $ python main_data_acquisition.py
+python main_data_acquisition.py
 ```
 
 This will trigger the entire process of data ETL. Namely:
@@ -195,7 +210,7 @@ This will trigger the entire process of data ETL. Namely:
 > lookback period to minimize the amount of missing historical data. 
 > For example, to run the data acquisition pipeline for the last 7 days, run the following command:
 > ```shell
->   $ docker compose run --rm energy_app python main_data_acquisition.py --lookback_days=7
+>   docker compose run --rm energy_app python main_data_acquisition.py --lookback_days=7
 > ```
 
 #### Risk assessment and recommendation creation task:
@@ -205,13 +220,13 @@ To launch the recommender main pipeline, execute the `main.py` script from the `
 ***With Docker:***
 
 ```shell
-   $ docker compose run --rm energy_app python main.py
+docker compose run --rm energy_app python main.py
 ```
 
 ***With Local Python interpreter:***
 
 ```shell
-   $ python main.py
+python main.py
 ```
 
 This will run the following operations pipeline:
@@ -252,11 +267,11 @@ We use `alembic` library for database migrations. To create a new table, follow 
 1. Add ORM SQLalchemy model in `energy_app/database/alembic/models.py` script
 2. Create new revision with alembic:
 ```shell
-   $ alembic revision --autogenerate -m "Added ntc forecasts table"
+alembic revision --autogenerate -m "Added ntc forecasts table"
 ```
 3. Apply the new revision with alembic:
 ```shell
-   $ alembic upgrade head
+alembic upgrade head
 ```
 
 
@@ -267,7 +282,7 @@ We use `alembic` library for database migrations. To create a new table, follow 
 This software includes a database management tool. Which backups the database to a local file. To run the backup script, execute the following command:
 
 ```shell
-   $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup database --file_name=<file_path_here>
+docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup database --file_name=<file_path_here>
 ```
 
 ##### To CSVs:
@@ -275,13 +290,13 @@ This software includes a database management tool. Which backups the database to
 Alternatively, the database can be backed up to CSV. To run the backup script, execute the following command:
 
 ```shell
-   $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup table
+docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup table
 ```
 
 > [!IMPORTANT]
 > There are multiple backup options. You can check the available options via:
 > ```shell
->  $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup --help
+>docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py backup --help
 > ```
 
 #### Database VACUUM:
@@ -289,7 +304,7 @@ Alternatively, the database can be backed up to CSV. To run the backup script, e
 Database optimization ops are also available (and frequently executed). To run a DB vacuum:
 
 ```shell
-   $ docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py vacuum database
+docker-compose -f docker-compose.yml run --rm energy_app python db_maintenance.py vacuum database
 ```
 
 ### Database full reset:
@@ -298,9 +313,9 @@ First, stop database container then remove the database volume and
 start the database container again.
 
 ```shell
-   $ docker compose down postgresql  # Stops the database container
-   $ docker volume rm energy-app-recommender_postgresql-data  # Removes the database volume
-   $ docker compose up -d postgresql  # Starts the database container
+docker compose down postgresql  # Stops the database container
+docker volume rm energy-app-recommender_postgresql-data  # Removes the database volume
+docker compose up -d postgresql  # Starts the database container
 ```
 
 Then, run the following command to apply the database migrations (with alembic):
@@ -308,13 +323,13 @@ Then, run the following command to apply the database migrations (with alembic):
 ***With Docker:***
 
 ```shell
-   $ docker compose run --rm energy_app sh entrypoint.sh
+docker compose run --rm energy_app sh entrypoint.sh
 ```
 
 ***With Local Python interpreter:***
 ```shell
-   $ alembic upgrade head
-   $ python load_db_fixtures.py
+alembic upgrade head
+python load_db_fixtures.py
 ```
 
 ### CLI arguments:
@@ -322,7 +337,7 @@ Then, run the following command to apply the database migrations (with alembic):
 The `energy_app` process pipeline can be triggered with the following CLI arguments:
 
 ```shell
-   $ python main.py --help
+python main.py --help
 ```
 
 #### Examples:
@@ -330,7 +345,7 @@ The `energy_app` process pipeline can be triggered with the following CLI argume
 To execute for a specific launch time:
     
 ```shell
-  $ python main.py --launch_time "2023-06-01T00:00:00Z"
+python main.py --launch_time "2023-06-01T00:00:00Z"
 ```
 
 To execute for a specific launch time and set a specific lookback period 
@@ -338,8 +353,8 @@ To execute for a specific launch time and set a specific lookback period
 (i.e., previously acquired via the ENTSO-E data acquisition module)
 
 ```shell
-  # Retrieve ENTSO-E data for the 30 days prior to 2023-06-01T00:00:00Z
-  $ python main.py --launch_time="2023-06-01T00:00:00Z" --lookback_days=30
+# Retrieve ENTSO-E data for the 30 days prior to 2023-06-01T00:00:00Z
+python main.py --launch_time="2023-06-01T00:00:00Z" --lookback_days=30
 ```
 
 
