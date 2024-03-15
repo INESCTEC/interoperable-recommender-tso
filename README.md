@@ -7,7 +7,7 @@
 [![version](https://img.shields.io/badge/version-1.0.1-blue.svg)]()
 [![status](https://img.shields.io/badge/status-production-brightgreen.svg)]()
 [![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Image Size](https://img.shields.io/badge/image%20size-1.71GB-blue.svg)]()
+[![Image Size](https://img.shields.io/badge/image%20size-1.52GB-blue.svg)]()
 
 -----------------------------------------------------
 
@@ -230,15 +230,22 @@ python main.py
 ```
 
 This will run the following operations pipeline:
-  1. Create country load & generation quantile forecasts and load system dataset from the service database (i.e., raw ENTSO-E data)
+  1. Create country load & generation quantile forecasts and load system dataset from the service database (i.e., raw TSO data)
   2. Calculate Risk-Reserve Curve and risk evaluation per country
   3. Create Risk Coordination Matrix and set the final risk level for each country
   4. Prepare the final JSON payload with the recommendations for each country (as required by the EnergyAPP backend)
-  5. Perform HTTP request to POST the recommendations to the EnergyAPP backend
+     * Store JSON payload in `energy_app/files/operational` directory
+  5. (Optional) Perform HTTP request to POST the recommendations to the EnergyAPP backend
+
 
 An overview of the full pipeline is available in the image below (press to zoom).
 
 <img src="docs/images/energy_app_pipeline.png" alt="drawing" width="800"/>
+
+
+> [!IMPORTANT]
+> This methodology depends on accurate probabilistic (quantile) forecasts created by internal quantile regression models, which also depend on the availability of historical data for country generation / load (actual and forecasted). Please run the data acquisition task for a minimum of 6 month lookback to assure a good forecast quality.
+
 
 
 ### Outputs:
