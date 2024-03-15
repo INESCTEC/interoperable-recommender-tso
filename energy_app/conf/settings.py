@@ -20,10 +20,10 @@ BACKUPS_PATH = os.path.join(BASE_PATH, "files", "backup")
 
 # Database configs:
 DATABASE = {
-    'name': os.environ.get("POSTGRES_NAME", default=''),
+    'name': os.environ.get("POSTGRES_NAME", default='master'),
     'user': os.environ.get("POSTGRES_USER", default=''),
     'password': os.environ.get("POSTGRES_PASSWORD", default=''),
-    'host': os.environ.get("POSTGRES_HOST", default=''),
+    'host': os.environ.get("POSTGRES_HOST", default='postgresql'),
     'port': int(os.environ.get("POSTGRES_PORT", default=5432)),
 }
 # Database URL
