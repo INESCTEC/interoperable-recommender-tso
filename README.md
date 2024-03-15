@@ -323,7 +323,8 @@ Then, run the following command to apply the database migrations (with alembic):
 ***With Docker:***
 
 ```shell
-docker compose run --rm energy_app sh entrypoint.sh
+docker compose run --rm energy_app alembic upgrade head
+docker compose run --rm energy_app python load_db_fixtures.py
 ```
 
 ***With Local Python interpreter:***
