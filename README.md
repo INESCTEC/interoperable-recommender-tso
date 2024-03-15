@@ -78,6 +78,32 @@ To configure the environment variables, copy the `dotenv` file to `.env` and fil
 >  In windows, just copy-paste the `dotenv` file and rename it to `.env`.
 
 
+The following environment variables are required.
+
+| variable   | Type | description            |
+|:-----------|:-----|:-----------------------|
+| POSTGRES_HOST         | String  | Recommender Database Host. Defaults to 'postgresql', which will work if you deploy the recommender in the same server as its database (see `docker-compose.yml` file) |
+| POSTGRES_NAME         | String  | Recommender Database name. Defaults to `master`  |
+| POSTGRES_USER         | String  | Recommender Database Username. Defaults to `''`. |
+| POSTGRES_PASSWORD     | String  | Recommender Database Password. Defaults to `''`.  |
+| POSTGRES_PORT         | Integer | Recommender Database Port. Defaults to `5432` |
+| ENTSOE_API_KEY        | String  | ENTSO-E TP `API KEY` used for data retrieval. See the official  [ENTSO-E Transparency Platform RESTful API documentation](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html) for more information. |
+
+
+Optional environment variables can be configured to send recommendations to the [Energy APP (Wattchr) RESTful API server](https://wattchr.eu/energy-app/api/v2/swagger-ui/index.html#/).
+
+| variable             | Type    | description            |
+|:---------------------|:--------|:-----------------------|
+| POST_TO_ENERGY_APP   | Integer | If `1`, executes an HTTP POST to the `ENERGYAPP_HOST` REST API server. Defaults to 0 (no request) |
+| POST_ONLY_ON_UPDATES | Integer | If `1` Only executes HTTP POST if there are updates in the number of hours with available recommendations. Defaults to 0 (always attempts to POST if `POST_TO_ENERGY_APP` = 1) |
+| ENERGYAPP_N_RETRIES  | Integer | Number of retries in case of problems on the HTTP requests to the  `ENERGYAPP_HOST` REST API server. |
+| ENERGYAPP_APIKEY     | String  | API KEY for `ENERGYAPP_HOST` REST API server |
+| ENERGYAPP_BASEPATH   | String  | Base API Path for `ENERGYAPP_HOST` REST API server |
+
+> [!NOTE]
+> The `Interoperable Recommender` is able to execute independently of the integration with an external REST API server (e.g., Wattchr). The current (optional) integration was developed within [InterConnect Energy APP](https://interconnectproject.eu/energy-applications/) pilot, with the latter API being used as a central layer of authentication / communication uniformization with end-users, for the recommendations provided by the `Interoperable Recommender`.
+
+
 ### With Docker:
 
 To launch the docker containers stack:
@@ -119,6 +145,24 @@ If you prefer using your local python interpreter (instead of docker), you'll ne
         $ python load_db_fixtures.py
     ```
 
+
+### Getting your ENTSO-E API Key and preparing the database
+
+The `Interoperable Recommender` needs at least 6 months of historical data to successfully execute. This means that, after a successful deployment, you will need to do an initial upload of historical data to its internal databases. 
+
+You can quickly do this by using the `data acquisition` module, which retrieves data from the [ENTSO-E Transparency Platform RESTful API](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html). 
+
+The following execution will retrieve data from multiple system variables (and every country) for the past 180 days.
+
+
+```shell
+   $ docker compose run --rm energy_app python main_data_acquisition.py  --lookback_days=180
+```
+
+> [!WARNING]
+> This command will take a while to execute. The `ENTSOE_API_KEY` environment variable must be declared to authenticate in the ENTSO-E TP API.
+
+
 ### How to run:
 
 > [!WARNING]
@@ -142,14 +186,14 @@ To launch the data acquisition pipeline, execute the `main_data_acquisition.py` 
 
 This will trigger the entire process of data ETL. Namely:
 
-  1. Data retrieval from ENTSO-E Transparency Platform (via it's [REST API](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html))
+  1. Data retrieval from ENTSO-E Transparency Platform (via it's [REST API](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html)). By default, data is retrieved for the past 2 days and for the day ahead (forecasts).
   2. Data manipulation and transformation (e.g., aggregate data by control area for NTC forecasts)
   3. Data load to the central database (PostgreSQL)
 
 > [!IMPORTANT] 
 > We recommend you run the data acquisition pipeline with a 
 > lookback period to minimize the amount of missing historical data. 
-> For example, to run the data acquisition pipeline for the last 30 days, run the following command:
+> For example, to run the data acquisition pipeline for the last 7 days, run the following command:
 > ```shell
 >   $ docker compose run --rm energy_app python main_data_acquisition.py --lookback_days=7
 > ```
@@ -294,7 +338,7 @@ To execute for a specific launch time and set a specific lookback period
 (i.e., previously acquired via the ENTSO-E data acquisition module)
 
 ```shell
-  # Retrieve ENTSOE data for the 30 days prior to 2023-06-01T00:00:00Z
+  # Retrieve ENTSO-E data for the 30 days prior to 2023-06-01T00:00:00Z
   $ python main.py --launch_time="2023-06-01T00:00:00Z" --lookback_days=30
 ```
 
