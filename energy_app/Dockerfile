@@ -33,6 +33,4 @@ CMD /wait
 
 COPY ./energy_app /energy_app
 
-RUN chmod +x entrypoint.sh
-RUN ["sh","/energy_app/entrypoint.sh"]
 #CMD ["tail", "-f", "/dev/null"]

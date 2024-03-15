@@ -18,13 +18,11 @@ services:
       - energy_app
 
   postgresql:
-    build:
-      context: .
-      dockerfile: ./database/Dockerfile
+    image: postgres:12.0-alpine
     container_name: postgresql
     restart: always
     env_file:
-      - database/.env
+      - energy_app/.env
     ports:
       - "5432:5432"
     volumes:

@@ -7,7 +7,7 @@ ENTSOE_API_KEY=insert_api_key_here
 
 # Database configs:
 POSTGRES_HOST=db_host
-POSTGRES_NAME=db_name
+POSTGRES_DB=db_name
 POSTGRES_USER=db_user
 POSTGRES_PASSWORD=db_password
 POSTGRES_PORT=db_port
