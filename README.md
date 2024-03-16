@@ -263,7 +263,7 @@ The following outputs are available, per country:
 | risk_evaluation | string | <ul>      <li>"not available' - no recommendation was issued (e.g., due to   insuficient data, or internal error)</li>      <li> 'healthy' - system not at risk of loss of load or energy   generation curtailment</li>      <li> 'increase' - system (or neighbour system) at risk and raised   need to increase energy consumption</li>      <li>'decrease' - system (or neighbour system) at risk and raised need   to decrease energy consumption</li>      </ul> |
 | risk_level      | int    | Risk threshold magnitude (0- healthy, 1-Low, 2-Medium,   3-high, 4-very high)                                                                                                                                                                                                                                                                                                                                                                                         |
 
-Besides storing this information in the local directory, it is currently also pushed to the EnergyAPP backend via HTTP POST request.
+Besides storing this information in the local directory, it is currently also pushed to the [Wattchr backend](https://wattchr.eu/energy-app/api/v2/swagger-ui/index.html#/) via HTTP POST request.
 
 ### Database maintenance / management:
 
