@@ -20,6 +20,19 @@ The main goal is to enable energy applications to empower European citizens with
 > [!IMPORTANT]
 > This software is currently providing recommendation actions for Interconnect [Wattchr](https://wattchr.eu/). See the official [booklet](docs/interconnect-booklet.pdf) for more details.
 
+### News
+
+* **2024-12:** Our work is now published on iScience! [See our publication](https://www.cell.com/iscience/fulltext/S2589-0042(24)02655-5).
+* **2024-10:** The **Interoperable Recommender** was presented at Enlit 2024! [See our presentation](docs/ir-enlit-2024-presentation.pdf).
+
+### Publication
+
+You can find more details on the methodology and use cases of the Interoperable Recommender in our open-source publication, available in iScience, an interdisciplinary open-access journal.
+
+#### [See the publication](https://www.cell.com/iscience/fulltext/S2589-0042(24)02655-5)
+
+### List of European Countries with Recommendations
+
 Below you can find a list of countries for which recommendations can be generated (limited by data availability on ENTSO-E TP platform).
 
 | country_code   | country_name           |
