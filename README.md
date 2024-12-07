@@ -29,7 +29,7 @@ The main goal is to enable energy applications to empower European citizens with
 
 You can find more details on the methodology and use cases of the Interoperable Recommender in our open-source publication, available in iScience, an interdisciplinary open-access journal.
 
-#### [See the publication](https://www.cell.com/iscience/fulltext/S2589-0042(24)02655-5)
+#### [Read our paper](https://www.cell.com/iscience/fulltext/S2589-0042(24)02655-5)
 
 ### List of European Countries with Recommendations
 
